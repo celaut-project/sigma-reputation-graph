@@ -5,22 +5,26 @@ mod tests {
 
     #[test]
     fn test_reputation_graph() {
-        // Crear múltiples pruebas de reputación
+
+        let object = ReputationProof::new(vec![], vec![],
+                                          100, 0, vec![],
+                                          None);
+
         let box1 = ReputationProof::new(vec![], vec![],
-                                        100, 30, vec![],
-                                        None);
+                                        100, 0, vec![],
+                                        Some(&object));
 
         let box2 = ReputationProof::new(vec![], vec![],
-                                                 50, 10, vec![],
-                                                 Some(&box1));
+                                                 100, 10,
+                                        vec![&box1], None);
 
         let box3 = ReputationProof::new(vec![], vec![],
-                                                 60, 20, vec![],
-                                                 Some(&box2));
+                                                 100, 50,
+                                        vec![&box2], None);
 
-        // Calcular la reputación de box3 con box1 como puntero
-        let reputation = box3.compute(Some(&box1));
 
-        assert_eq!(reputation, 1.00);
+        let reputation = box3.compute(Some(&object));
+
+        assert_eq!(reputation, 0.05);
     }
 }

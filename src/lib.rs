@@ -7,8 +7,8 @@ struct ReputationProof<'a> {
     total_amount: i64,
     expended_amount: i64,
     free_amount: i64,
-    expended_percentage: f64,
-    free_percentage: f64,
+    expended_proportion: f64,
+    free_proportion: f64,
     outputs: Vec<&'a ReputationProof<'a>>,
     pointer_box: Option<&'a ReputationProof<'a>>,
 }
@@ -29,8 +29,8 @@ impl <'a> ReputationProof<'a> {
         pointer_box: Option<&'a ReputationProof<'a>>,
     ) -> ReputationProof<'a> {
         let free_amount = total_amount - expended_amount;
-        let expended_percentage = (expended_amount as f64 / total_amount as f64) * 100.0;
-        let free_percentage = (free_amount as f64 / total_amount as f64) * 100.0;
+        let expended_percentage = expended_amount as f64 / total_amount as f64;
+        let free_percentage = free_amount as f64 / total_amount as f64;
 
         ReputationProof {
             box_id,
@@ -38,8 +38,8 @@ impl <'a> ReputationProof<'a> {
             total_amount,
             expended_amount,
             free_amount,
-            expended_percentage,
-            free_percentage,
+            expended_proportion: expended_percentage,
+            free_proportion: free_percentage,
             outputs,
             pointer_box,
         }
@@ -58,7 +58,7 @@ impl <'a> ReputationProof<'a> {
             let reputation: f64 = self
                 .outputs
                 .iter()
-                .map(|out| self.expended_percentage * out.compute(pointer))
+                .map(|out| self.expended_proportion * out.compute(pointer))
                 .sum();
             reputation
         }
