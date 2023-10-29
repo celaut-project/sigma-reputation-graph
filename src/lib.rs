@@ -1,7 +1,7 @@
 mod test;
 
 #[derive(Clone)]
-struct ReputationProof {
+struct ReputationProof<'a> {
     box_id: Vec<u8>,
     token_id: Vec<u8>,
     total_amount: i64,
@@ -9,19 +9,25 @@ struct ReputationProof {
     free_amount: i64,
     expended_percentage: f64,
     free_percentage: f64,
-    outputs: Vec<ReputationProof>,
-    pointer_box: Option<Box<ReputationProof>>,
+    outputs: Vec<&'a ReputationProof<'a>>,
+    pointer_box: Option<&'a ReputationProof<'a>>,
 }
 
-impl ReputationProof {
+impl<'a> PartialEq for ReputationProof<'a> {
+    fn eq(&self, other: &Self) -> bool {
+        self.box_id == other.box_id
+    }
+}
+
+impl <'a> ReputationProof<'a> {
     fn new(
         box_id: Vec<u8>,
         token_id: Vec<u8>,
         total_amount: i64,
         expended_amount: i64,
-        outputs: Vec<ReputationProof>,
-        pointer_box: Option<Box<ReputationProof>>,
-    ) -> ReputationProof {
+        outputs: Vec<&'a ReputationProof<'a>>,
+        pointer_box: Option<&'a ReputationProof<'a>>,
+    ) -> ReputationProof<'a> {
         let free_amount = total_amount - expended_amount;
         let expended_percentage = (expended_amount as f64 / total_amount as f64) * 100.0;
         let free_percentage = (free_amount as f64 / total_amount as f64) * 100.0;
@@ -39,16 +45,20 @@ impl ReputationProof {
         }
     }
 
-    fn compute(&self) -> f64 {
-        if let Some(ref ptr) = self.pointer_box {
+    fn compute(&self, pointer: Option<&'a ReputationProof<'a>>) -> f64 {
+        if self.pointer_box.is_some() {
             // Recursive case: if there is pointer, uses the pointer_box's reputation.
-            ptr.compute()
+            if pointer.is_some() && self.pointer_box == pointer {
+                1.00
+            } else {
+                0.00 // ptr.compute(None)  // TODO
+            }
         } else {
             // Base case: if there is not pointer, computes the reputation directly.
             let reputation: f64 = self
                 .outputs
                 .iter()
-                .map(|out| self.expended_percentage * out.compute())
+                .map(|out| self.expended_percentage * out.compute(pointer))
                 .sum();
             reputation
         }
