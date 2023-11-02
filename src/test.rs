@@ -1,7 +1,7 @@
 
 #[cfg(test)]
 mod tests {
-    use crate::ReputationProof;
+    use crate::{PointerBox, ReputationProof};
 
     #[test]
     fn test_reputation_graph() {
@@ -10,9 +10,11 @@ mod tests {
                                           100, 0, vec![],
                                           None);
 
+        let pointer= PointerBox::ReputationProof(&object);
+
         let box1 = ReputationProof::new(vec![], vec![],
                                         100, 0, vec![],
-                                        Some(&object));
+                                        Some(&pointer));
 
         let box2 = ReputationProof::new(vec![], vec![],
                                                  100, 10,
@@ -23,7 +25,7 @@ mod tests {
                                         vec![&box2], None);
 
 
-        let reputation = box3.compute(Some(&object));
+        let reputation = box3.compute(Some(&pointer));
 
         assert_eq!(reputation, 0.05);
     }
