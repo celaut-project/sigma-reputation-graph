@@ -11,10 +11,6 @@ struct ReputationProof<'a> {
     box_id: Vec<u8>,
     token_id: Vec<u8>,
     total_amount: i64,
-    expended_amount: i64,
-    free_amount: i64,
-    expended_proportion: f64,
-    free_proportion: f64,
     outputs: Vec<&'a ReputationProof<'a>>,
     pointer_box: Option<&'a PointerBox<'a>>,
 }
@@ -30,28 +26,67 @@ impl <'a> ReputationProof<'a> {
         box_id: Vec<u8>,
         token_id: Vec<u8>,
         total_amount: i64,
-        expended_amount: i64,
         outputs: Vec<&'a ReputationProof<'a>>,
         pointer_box: Option<&'a PointerBox<'a>>,
     ) -> ReputationProof<'a> {
-        let free_amount = total_amount - expended_amount;
-        let expended_percentage = expended_amount as f64 / total_amount as f64;
-        let free_percentage = free_amount as f64 / total_amount as f64;
-
         ReputationProof {
             box_id,
             token_id,
             total_amount,
-            expended_amount,
-            free_amount,
-            expended_proportion: expended_percentage,
-            free_proportion: free_percentage,
             outputs,
             pointer_box,
         }
     }
 
-    fn compute(&self, pointer: Option<&'a PointerBox<'a>>) -> f64 {
+    /**
+        Creates a new reputation proof from scratch.
+    */
+    pub fn create(
+        total_amount: i64,
+        pointer_box: Option<&'a PointerBox<'a>>,
+    ) -> ReputationProof<'a> {
+        return ReputationProof::new(
+            vec![], vec![],
+            total_amount,  vec![],
+            pointer_box
+        )
+    }
+
+    /**
+        Creates a new reputation proof from the current one.
+        Raises exceptions if any rule is violated.
+    */
+    pub fn spend(&mut self,
+                 amount: i64,
+                 pointer_box: Option<&'a PointerBox<'a>>,
+    ) -> ReputationProof<'a> {
+        let newone = ReputationProof::new(
+            vec![], self.get_token_id(),
+            amount, vec![],
+            pointer_box
+        );
+        self.outputs.push(&newone);
+        return newone;
+    }
+
+    /**
+        Search on all the outputs tree to calculate the expended amount.
+    */
+    fn expended_proportion(&self) -> f64 {
+        return 0.00 // TODO
+    }
+
+    /**
+            Optimize memory if the childs don't store the token_id and get it from the root.
+    */
+    fn get_token_id(&self) -> Vec<u8> {
+        return self.token_id.clone()  // TODO
+    }
+
+    /**
+        Compute the reputation of a pointer searching on all the output tree.
+    */
+    pub fn compute(&self, pointer: Option<&'a PointerBox<'a>>) -> f64 {
         if self.pointer_box.is_some() {
             // Recursive case: if there is pointer, uses the pointer_box's reputation.
             if pointer.is_some() && self.pointer_box == pointer {
@@ -64,7 +99,7 @@ impl <'a> ReputationProof<'a> {
             let reputation: f64 = self
                 .outputs
                 .iter()
-                .map(|out| self.expended_proportion * out.compute(pointer))
+                .map(|out| self.expended_proportion() * out.compute(pointer))
                 .sum();
             reputation
         }
