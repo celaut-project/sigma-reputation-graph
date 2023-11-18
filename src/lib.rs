@@ -11,7 +11,7 @@ struct ReputationProof<'a> {
     box_id: Vec<u8>,
     token_id: Vec<u8>,
     total_amount: i64,
-    outputs: Vec<&'a ReputationProof<'a>>,
+    outputs: Vec<ReputationProof<'a>>,
     pointer_box: Option<&'a PointerBox<'a>>,
 }
 
@@ -26,7 +26,7 @@ impl <'a> ReputationProof<'a> {
         box_id: Vec<u8>,
         token_id: Vec<u8>,
         total_amount: i64,
-        outputs: Vec<&'a ReputationProof<'a>>,
+        outputs: Vec<ReputationProof<'a>>,
         pointer_box: Option<&'a PointerBox<'a>>,
     ) -> ReputationProof<'a> {
         ReputationProof {
@@ -59,25 +59,26 @@ impl <'a> ReputationProof<'a> {
     pub fn spend(&mut self,
                  amount: i64,
                  pointer_box: Option<&'a PointerBox<'a>>,
-    ) -> ReputationProof<'a> {
+    ) -> &mut ReputationProof<'a> {
         let newone = ReputationProof::new(
             vec![], self.get_token_id(),
             amount, vec![],
             pointer_box
         );
-        self.outputs.push(&newone);
-        return newone;
+        self.outputs.push(newone);
+        let index = self.outputs.len() - 1;
+        return &mut self.outputs[index];
     }
 
     /**
-        Search on all the outputs tree to calculate the expended amount.
+        Get the proportion of reputation that have the out_index output over the total.
     */
-    fn expended_proportion(&self) -> f64 {
-        return 0.00 // TODO
+    fn expended_proportion(&self, out_index: usize) -> f64 {
+        return self.outputs[out_index].total_amount as f64 / self.total_amount as f64;
     }
 
     /**
-            Optimize memory if the childs don't store the token_id and get it from the root.
+        Optimize memory if the childs don't store the token_id and get it from the root.
     */
     fn get_token_id(&self) -> Vec<u8> {
         return self.token_id.clone()  // TODO
@@ -96,12 +97,11 @@ impl <'a> ReputationProof<'a> {
             }
         } else {
             // Base case: if there is not pointer, computes the reputation directly.
-            let reputation: f64 = self
-                .outputs
+            self.outputs
                 .iter()
-                .map(|out| self.expended_proportion() * out.compute(pointer))
-                .sum();
-            reputation
+                .enumerate()
+                .map(|(index, out)| self.expended_proportion(index) * out.compute(pointer))
+                .sum()
         }
     }
 
