@@ -3,7 +3,7 @@ mod test;
 #[derive(PartialEq)]
 enum PointerBox<'a> {
     ReputationProof(&'a ReputationProof<'a>),
-    String
+    String(String)
 }
 
 #[derive(Clone)]
@@ -56,18 +56,18 @@ impl <'a> ReputationProof<'a> {
         Creates a new reputation proof from the current one.
         Raises exceptions if any rule is violated.
     */
-    pub fn spend(&mut self,
+    pub fn spend(&'a mut self,
                  amount: i64,
                  pointer_box: Option<&'a PointerBox<'a>>,
     ) -> &mut ReputationProof<'a> {
-        let newone = ReputationProof::new(
-            vec![], self.get_token_id(),
-            amount, vec![],
-            pointer_box
+        self.outputs.push(
+            ReputationProof::new(
+                vec![], self.get_token_id(),
+                amount, vec![],
+                pointer_box
+            )
         );
-        self.outputs.push(newone);
-        let index = self.outputs.len() - 1;
-        return &mut self.outputs[index];
+        return &mut self.outputs[self.outputs.len() - 1];
     }
 
     /**
@@ -105,4 +105,15 @@ impl <'a> ReputationProof<'a> {
         }
     }
 
+}
+
+fn static_spend<'a>(main: &'a mut ReputationProof<'a>, amount: i64,
+                    pointer_box: Option<&'a PointerBox<'a>>
+) -> &'a mut ReputationProof<'a>
+{
+    (*main).spend(amount, None)
+}
+
+fn static_compute_reputation<'a>(main: &'a mut ReputationProof<'a>, pointer_box: &PointerBox<'a>) -> f64 {
+    (*main).compute(Some(pointer_box))
 }
