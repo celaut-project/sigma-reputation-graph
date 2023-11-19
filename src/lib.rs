@@ -56,10 +56,10 @@ impl <'a> ReputationProof<'a> {
         Creates a new reputation proof from the current one.
         Raises exceptions if any rule is violated.
     */
-    pub fn spend(&'a mut self,
+    pub fn spend<'b>(&'b mut self,
                  amount: i64,
                  pointer_box: Option<&'a PointerBox<'a>>,
-    ) -> &mut ReputationProof<'a> {
+    ) -> &'b mut ReputationProof<'a> {
         self.outputs.push(
             ReputationProof::new(
                 vec![], self.get_token_id(),
