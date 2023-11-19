@@ -21,7 +21,7 @@ impl<'a> PartialEq for ReputationProof<'a> {
     }
 }
 
-impl <'a> ReputationProof<'a> {
+impl <'a, 'b> ReputationProof<'a> {
     fn new(
         box_id: Vec<u8>,
         token_id: Vec<u8>,
@@ -43,7 +43,7 @@ impl <'a> ReputationProof<'a> {
     */
     pub fn create(
         total_amount: i64,
-        pointer_box: Option<&'a PointerBox<'a>>,
+        pointer_box: Option<&'b PointerBox<'a>>,
     ) -> ReputationProof<'a> {
         return ReputationProof::new(
             vec![], vec![],
@@ -56,9 +56,9 @@ impl <'a> ReputationProof<'a> {
         Creates a new reputation proof from the current one.
         Raises exceptions if any rule is violated.
     */
-    pub fn spend<'b>(&'b mut self,
+    pub fn spend(&'b mut self,
                  amount: i64,
-                 pointer_box: Option<&'a PointerBox<'a>>,
+                 pointer_box: Option<&'b PointerBox<'a>>,
     ) -> &'b mut ReputationProof<'a> {
         self.outputs.push(
             ReputationProof::new(
@@ -87,7 +87,7 @@ impl <'a> ReputationProof<'a> {
     /**
         Compute the reputation of a pointer searching on all the output tree.
     */
-    pub fn compute(&self, pointer: Option<&'a PointerBox<'a>>) -> f64 {
+    pub fn compute(&self, pointer: Option<&'b PointerBox<'a>>) -> f64 {
         if self.pointer_box.is_some() {
             // Recursive case: if there is pointer, uses the pointer_box's reputation.
             if pointer.is_some() && self.pointer_box == pointer {
@@ -100,23 +100,33 @@ impl <'a> ReputationProof<'a> {
             self.outputs
                 .iter()
                 .enumerate()
-                .map(|(index, out)| self.expended_proportion(index) * out.compute(pointer))
+                .map(
+                    |(index, out)|
+                    self.expended_proportion(index) * out.compute(pointer)
+                )
                 .sum()
         }
     }
 
 }
 
-fn static_spend<'a>(main: &'a mut ReputationProof<'a>, amount: i64,
-                    pointer_box: Option<&'a PointerBox<'a>>
-) -> &'a mut ReputationProof<'a>
+fn static_spend<'a, 'b>
+(
+    main: &'b mut ReputationProof<'a>,
+    amount: i64,
+    pointer_box: Option<&'b PointerBox<'a>>
+)
+    -> &'b mut ReputationProof<'a>
 {
-    (*main).spend(amount, None)
+    (*main).spend(amount, pointer_box)
 }
 
-fn static_compute_reputation<'a>(main: &'a mut ReputationProof<'a>,
-                                 pointer_box: &PointerBox<'a>
-) -> f64
+fn static_compute_reputation<'a, 'b>
+(
+    main: &'b mut ReputationProof<'a>,
+    pointer_box: &'b PointerBox<'a>
+)
+    -> f64
 {
     (*main).compute(Some(pointer_box))
 }

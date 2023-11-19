@@ -18,8 +18,8 @@ mod tests {
         let mut owner_box1 = ReputationProof::create(100, None);
         let box1 = &mut owner_box1;
 
-        let box2 = static_spend(box1, 60, None);
-        let box3 = static_spend(box1, 10, Some(&pointer1));
+        let box2 = (*box1).spend(60, None);
+        let box3 = (*box1).spend(10, Some(&pointer1));
 
         // box 2
         static_spend(box2, 30, Some(&pointer1));
