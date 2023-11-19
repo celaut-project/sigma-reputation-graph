@@ -114,6 +114,9 @@ fn static_spend<'a>(main: &'a mut ReputationProof<'a>, amount: i64,
     (*main).spend(amount, None)
 }
 
-fn static_compute_reputation<'a>(main: &'a mut ReputationProof<'a>, pointer_box: &PointerBox<'a>) -> f64 {
+fn static_compute_reputation<'a>(main: &'a mut ReputationProof<'a>,
+                                 pointer_box: &PointerBox<'a>
+) -> f64
+{
     (*main).compute(Some(pointer_box))
 }
