@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+
 mod test;
 
 #[derive(PartialEq)]
@@ -11,7 +13,7 @@ struct ReputationProof<'a> {
     box_id: Vec<u8>,
     token_id: Vec<u8>,
     total_amount: i64,
-    outputs: Vec<ReputationProof<'a>>,
+    outputs: Vec<RefCell<ReputationProof<'a>>>,
     pointer_box: Option<&'a PointerBox<'a>>,
 }
 
@@ -26,7 +28,7 @@ impl <'a, 'b> ReputationProof<'a> {
         box_id: Vec<u8>,
         token_id: Vec<u8>,
         total_amount: i64,
-        outputs: Vec<ReputationProof<'a>>,
+        outputs: Vec<RefCell<ReputationProof<'a>>>,
         pointer_box: Option<&'a PointerBox<'a>>,
     ) -> ReputationProof<'a> {
         ReputationProof {
@@ -59,22 +61,23 @@ impl <'a, 'b> ReputationProof<'a> {
     pub fn spend(&'b mut self,
                  amount: i64,
                  pointer_box: Option<&'b PointerBox<'a>>,
-    ) -> &'b mut ReputationProof<'a> {
-        self.outputs.push(
-            ReputationProof::new(
-                vec![], self.get_token_id(),
-                amount, vec![],
-                pointer_box
+    ) -> RefCell<ReputationProof<'a>> {
+        let new_box = RefCell::create(
+                ReputationProof::new(
+                    vec![], self.get_token_id(),
+                    amount, vec![],
+                    pointer_box
             )
         );
-        return &mut self.outputs[self.outputs.len() - 1];
+        self.outputs.push(new_box);
+        return new_box;
     }
 
     /**
         Get the proportion of reputation that have the out_index output over the total.
     */
     fn expended_proportion(&self, out_index: usize) -> f64 {
-        return self.outputs[out_index].total_amount as f64 / self.total_amount as f64;
+        return self.outputs[out_index].into_inner().total_amount as f64 / self.total_amount as f64;
     }
 
     /**
@@ -112,11 +115,11 @@ impl <'a, 'b> ReputationProof<'a> {
 
 fn static_spend<'a, 'b>
 (
-    main: &'b mut ReputationProof<'a>,
+    main: &'b mut RefCell<ReputationProof<'a>>,
     amount: i64,
     pointer_box: Option<&'b PointerBox<'a>>
 )
-    -> &'b mut ReputationProof<'a>
+    -> &'b RefCell<ReputationProof<'a>>
 {
     (*main).spend(amount, pointer_box)
 }

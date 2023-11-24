@@ -1,6 +1,7 @@
 
 #[cfg(test)]
 mod tests {
+    use std::cell::RefCell;
     use crate::{PointerBox, ReputationProof, static_spend, static_compute_reputation};
 
     #[test]
@@ -15,11 +16,11 @@ mod tests {
         let pointer3 = PointerBox::String(String::from("nodo-c57"));
 
         // box 1
-        let mut owner_box1 = ReputationProof::create(100, None);
-        let box1 = &mut owner_box1;
+        let owner_box1 = ReputationProof::create(100, None);
+        let cell1 = RefCell::new(owner_box1);
 
-        let box2 = (*box1).spend(60, None);
-        let box3 = (*box1).spend(10, Some(&pointer1));
+        let cell1 = cell1.into_inner().spend(60, None);
+        let cell3 = cell1.into_inner().spend(10, Some(&pointer1));
 
         // box 2
         static_spend(box2, 30, Some(&pointer1));
