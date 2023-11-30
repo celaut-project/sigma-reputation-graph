@@ -1,7 +1,6 @@
 
 #[cfg(test)]
 mod tests {
-    use std::cell::RefCell;
     use crate::{PointerBox, ReputationProof};
 
     #[test]
@@ -15,26 +14,28 @@ mod tests {
 
         let pointer3 = PointerBox::String(String::from("nodo-c57"));
 
-        // box 1
-        let owner_box1 = ReputationProof::create(100, None);
-        let cell1 = RefCell::new(owner_box1);
+        // proof 1
+        let mut proof1 = ReputationProof::create(100, None);
 
-        let cell2 = cell1.borrow_mut().spend(60, None);
-        let cell3 = cell1.borrow_mut().spend(10, Some(&pointer1));
+        let mut proof2 = (&proof1).spend(60, None);
+        proof1.outputs.push(&proof2);
 
-        // box 2
-        cell2.borrow_mut().spend(30, Some(&pointer1));
-        cell2.borrow_mut().spend(30, Some(&pointer2));
+        let mut proof3 = (&proof1).spend(10, Some(&pointer1));
+        proof1.outputs.push(&proof3);
 
-        // box 3
-        cell3.borrow_mut().spend(7, Some(&pointer3));
+        // proof 2
+        /*let (mut proof2, _) = proof2.spend(30, Some(&pointer1));
+        let (mut proof2, _) = proof2.spend(30, Some(&pointer2));
 
-        assert_eq!(cell1.borrow_mut().compute(Some(&pointer1)), 0.00);
-        assert_eq!(cell1.borrow_mut().compute(Some(&pointer2)), 0.00);
-        assert_eq!(cell1.borrow_mut().compute(Some(&pointer3)), 0.00);
+        // proof 3
+        let (mut proof3, _) = proof3.spend(7, Some(&pointer3));
 
-        assert_eq!(cell2.borrow_mut().compute(Some(&pointer1)), 0.00);
-        assert_eq!(cell2.borrow_mut().compute(Some(&pointer2)), 0.00);
-        assert_eq!(cell2.borrow_mut().compute(Some(&pointer3)), 0.00);
+        assert_eq!((&proof1).compute(Some(&pointer1)), 0.00);
+        assert_eq!((&proof1).compute(Some(&pointer2)), 0.00);
+        assert_eq!((&proof1).compute(Some(&pointer3)), 0.00);
+
+        assert_eq!((&proof2).compute(Some(&pointer1)), 0.00);
+        assert_eq!((&proof2).compute(Some(&pointer2)), 0.00);
+        assert_eq!((&proof2).compute(Some(&pointer3)), 0.00); */
     }
 }

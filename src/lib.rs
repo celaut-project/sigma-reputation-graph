@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 
 mod test;
 
@@ -13,7 +12,7 @@ struct ReputationProof<'a> {
     box_id: Vec<u8>,
     token_id: Vec<u8>,
     total_amount: i64,
-    outputs: Vec<RefCell<ReputationProof<'a>>>,
+    outputs: Vec<&'a ReputationProof<'a>>,
     pointer_box: Option<&'a PointerBox<'a>>,
 }
 
@@ -28,7 +27,7 @@ impl <'a, 'b> ReputationProof<'a> {
         box_id: Vec<u8>,
         token_id: Vec<u8>,
         total_amount: i64,
-        outputs: Vec<RefCell<ReputationProof<'a>>>,
+        outputs: Vec<&'a ReputationProof<'a>>,
         pointer_box: Option<&'b PointerBox<'a>>,
     ) -> ReputationProof<'b> {
         ReputationProof {
@@ -48,7 +47,7 @@ impl <'a, 'b> ReputationProof<'a> {
         pointer_box: Option<&'b PointerBox<'a>>,
     ) -> ReputationProof<'b> {
         /*
-        *   Se supone que ->  'b < 'a
+        *   Supposed that ->  'b < 'a
          */
         return ReputationProof::new(
             vec![], vec![],
@@ -61,26 +60,26 @@ impl <'a, 'b> ReputationProof<'a> {
         Creates a new reputation proof from the current one.
         Raises exceptions if any rule is violated.
     */
-    pub fn spend(&'b mut self,
+    pub fn spend(&self,
                  amount: i64,
                  pointer_box: Option<&'b PointerBox<'a>>,
-    ) -> RefCell<ReputationProof<'b>> {
-        let new_box = RefCell::new(
-                ReputationProof::new(
-                    vec![], self.get_token_id(),
-                    amount, vec![],
-                    pointer_box
-            )
+    ) -> ReputationProof<'b> {
+        // TODO validate if waste amount is possible for self.
+
+        let new = ReputationProof::new(
+            vec![], self.get_token_id(),
+            amount, vec![],
+            pointer_box
         );
-        self.outputs.push(new_box.clone());
-        return new_box;
+        // TODO Must execute self.outputs.push(new) after the function. How make it a law?
+        new
     }
 
     /**
         Get the proportion of reputation that have the out_index output over the total.
     */
     fn expended_proportion(&self, out_index: usize) -> f64 {
-        return self.outputs[out_index].borrow_mut().total_amount as f64 / self.total_amount as f64;
+        return self.outputs[out_index].total_amount as f64 / self.total_amount as f64;
     }
 
     /**
@@ -108,10 +107,9 @@ impl <'a, 'b> ReputationProof<'a> {
                 .enumerate()
                 .map(
                     |(index, out)|
-                    self.expended_proportion(index) * out.borrow_mut().compute(pointer)
+                    self.expended_proportion(index) * (*out).compute(pointer)  // TODO (*out) to have only &ReputationProof, instead of &&ReputationProof. Is that correct?
                 )
                 .sum()
         }
     }
-
 }
