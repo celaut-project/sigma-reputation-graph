@@ -2,7 +2,7 @@
 #[cfg(test)]
 mod tests {
     use std::cell::RefCell;
-    use crate::{PointerBox, ReputationProof, static_spend, static_compute_reputation};
+    use crate::{PointerBox, ReputationProof};
 
     #[test]
     fn test_reputation_graph() {
@@ -19,22 +19,22 @@ mod tests {
         let owner_box1 = ReputationProof::create(100, None);
         let cell1 = RefCell::new(owner_box1);
 
-        let cell1 = cell1.into_inner().spend(60, None);
-        let cell3 = cell1.into_inner().spend(10, Some(&pointer1));
+        let cell2 = cell1.borrow_mut().spend(60, None);
+        let cell3 = cell1.borrow_mut().spend(10, Some(&pointer1));
 
         // box 2
-        static_spend(box2, 30, Some(&pointer1));
-        static_spend(box2, 30, Some(&pointer2));
+        cell2.borrow_mut().spend(30, Some(&pointer1));
+        cell2.borrow_mut().spend(30, Some(&pointer2));
 
         // box 3
-        static_spend(box3, 7, Some(&pointer3));
+        cell3.borrow_mut().spend(7, Some(&pointer3));
 
-        assert_eq!(static_compute_reputation(box1, &pointer1), 0.00);
-        assert_eq!(static_compute_reputation(box1, &pointer2), 0.00);
-        assert_eq!(static_compute_reputation(box2, &pointer3), 0.00);
+        assert_eq!(cell1.borrow_mut().compute(Some(&pointer1)), 0.00);
+        assert_eq!(cell1.borrow_mut().compute(Some(&pointer2)), 0.00);
+        assert_eq!(cell1.borrow_mut().compute(Some(&pointer3)), 0.00);
 
-        assert_eq!(static_compute_reputation(box2, &pointer1), 0.00);
-        assert_eq!(static_compute_reputation(box2, &pointer2), 0.00);
-        assert_eq!(static_compute_reputation(box2, &pointer3), 0.00);
+        assert_eq!(cell2.borrow_mut().compute(Some(&pointer1)), 0.00);
+        assert_eq!(cell2.borrow_mut().compute(Some(&pointer2)), 0.00);
+        assert_eq!(cell2.borrow_mut().compute(Some(&pointer3)), 0.00);
     }
 }

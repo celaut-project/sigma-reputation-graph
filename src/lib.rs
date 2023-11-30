@@ -29,8 +29,8 @@ impl <'a, 'b> ReputationProof<'a> {
         token_id: Vec<u8>,
         total_amount: i64,
         outputs: Vec<RefCell<ReputationProof<'a>>>,
-        pointer_box: Option<&'a PointerBox<'a>>,
-    ) -> ReputationProof<'a> {
+        pointer_box: Option<&'b PointerBox<'a>>,
+    ) -> ReputationProof<'b> {
         ReputationProof {
             box_id,
             token_id,
@@ -46,7 +46,10 @@ impl <'a, 'b> ReputationProof<'a> {
     pub fn create(
         total_amount: i64,
         pointer_box: Option<&'b PointerBox<'a>>,
-    ) -> ReputationProof<'a> {
+    ) -> ReputationProof<'b> {
+        /*
+        *   Se supone que ->  'b < 'a
+         */
         return ReputationProof::new(
             vec![], vec![],
             total_amount,  vec![],
@@ -61,15 +64,15 @@ impl <'a, 'b> ReputationProof<'a> {
     pub fn spend(&'b mut self,
                  amount: i64,
                  pointer_box: Option<&'b PointerBox<'a>>,
-    ) -> RefCell<ReputationProof<'a>> {
-        let new_box = RefCell::create(
+    ) -> RefCell<ReputationProof<'b>> {
+        let new_box = RefCell::new(
                 ReputationProof::new(
                     vec![], self.get_token_id(),
                     amount, vec![],
                     pointer_box
             )
         );
-        self.outputs.push(new_box);
+        self.outputs.push(new_box.clone());
         return new_box;
     }
 
@@ -77,7 +80,7 @@ impl <'a, 'b> ReputationProof<'a> {
         Get the proportion of reputation that have the out_index output over the total.
     */
     fn expended_proportion(&self, out_index: usize) -> f64 {
-        return self.outputs[out_index].into_inner().total_amount as f64 / self.total_amount as f64;
+        return self.outputs[out_index].borrow_mut().total_amount as f64 / self.total_amount as f64;
     }
 
     /**
@@ -105,31 +108,10 @@ impl <'a, 'b> ReputationProof<'a> {
                 .enumerate()
                 .map(
                     |(index, out)|
-                    self.expended_proportion(index) * out.compute(pointer)
+                    self.expended_proportion(index) * out.borrow_mut().compute(pointer)
                 )
                 .sum()
         }
     }
 
-}
-
-fn static_spend<'a, 'b>
-(
-    main: &'b mut RefCell<ReputationProof<'a>>,
-    amount: i64,
-    pointer_box: Option<&'b PointerBox<'a>>
-)
-    -> &'b RefCell<ReputationProof<'a>>
-{
-    (*main).spend(amount, pointer_box)
-}
-
-fn static_compute_reputation<'a, 'b>
-(
-    main: &'b mut ReputationProof<'a>,
-    pointer_box: &'b PointerBox<'a>
-)
-    -> f64
-{
-    (*main).compute(Some(pointer_box))
 }
