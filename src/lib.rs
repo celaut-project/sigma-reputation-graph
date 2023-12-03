@@ -1,7 +1,7 @@
 use std::fmt::{Debug, Formatter};
 use rand::Rng;
-
-mod test;
+use pyo3::prelude::*;
+use std::cmp::Ordering;
 
 fn generate_random_vec_u8(length: usize) -> Vec<u8> {
     let mut rng = rand::thread_rng();
@@ -70,8 +70,8 @@ impl <'a, 'b> ReputationProof<'a> {
     }
 
     /**
-        Creates a new reputation proof from scratch.
-    */
+    Creates a new reputation proof from scratch.
+     */
     pub fn create(
         total_amount: i64,
         pointer_box: Option<&'b PointerBox<'a>>,
@@ -87,9 +87,9 @@ impl <'a, 'b> ReputationProof<'a> {
     }
 
     /**
-        Creates a new reputation proof from the current one.
-        Raises exceptions if any rule is violated.
-    */
+    Creates a new reputation proof from the current one.
+    Raises exceptions if any rule is violated.
+     */
     pub fn spend(&self,
                  amount: i64,
                  pointer_box: Option<&'b PointerBox<'a>>,
@@ -106,15 +106,15 @@ impl <'a, 'b> ReputationProof<'a> {
     }
 
     /**
-        Get the proportion of reputation that have the out_index output over the total.
-    */
+    Get the proportion of reputation that have the out_index output over the total.
+     */
     fn expended_proportion(&self, out_index: usize) -> f64 {
         return self.outputs[out_index].total_amount as f64 / self.total_amount as f64;
     }
 
     /**
-        Optimize memory if the childs don't store the token_id and get it from the root.
-    */
+    Optimize memory if the childs don't store the token_id and get it from the root.
+     */
     fn get_token_id(&self) -> Vec<u8> {
         return self.token_id.clone()
     }
@@ -151,4 +151,26 @@ impl <'a, 'b> ReputationProof<'a> {
                 .sum()
         }
     }
+}
+
+
+#[pyfunction]
+fn static_compute()
+{
+    println!("Static compute function");
+}
+
+#[pyfunction]
+fn dynamic_compute()
+{
+    println!("Dynamic compute function.");
+}
+
+
+#[pymodule]
+fn compute_reputation_graph(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_function(wrap_pyfunction!(static_compute, m)?)?;
+    m.add_function(wrap_pyfunction!(dynamic_compute, m)?)?;
+
+    Ok(())
 }
