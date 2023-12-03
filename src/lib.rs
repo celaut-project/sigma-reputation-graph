@@ -1,5 +1,4 @@
 use std::fmt::{Debug, Formatter};
-use std::ptr;
 use rand::Rng;
 
 mod test;
@@ -21,6 +20,15 @@ fn generate_random_vec_u8(length: usize) -> Vec<u8> {
 enum PointerBox<'a> {
     ReputationProof(&'a ReputationProof<'a>),
     String(String)
+}
+
+impl<'a, 'b> PointerBox<'a> {
+    fn compute(&self, pointer: &'b PointerBox<'a>) -> f64 {
+        match self {
+            PointerBox::ReputationProof(proof) => proof.compute(pointer),
+            PointerBox::String(..) => 0.00
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -93,7 +101,7 @@ impl <'a, 'b> ReputationProof<'a> {
             amount, vec![],
             pointer_box
         );
-        // TODO Must execute self.outputs.push(new) after the function. How make it a law?
+        // TODO Must execute self.outputs.push(new) after the function. How make it a rule?
         new
     }
 
@@ -108,41 +116,37 @@ impl <'a, 'b> ReputationProof<'a> {
         Optimize memory if the childs don't store the token_id and get it from the root.
     */
     fn get_token_id(&self) -> Vec<u8> {
-        return self.token_id.clone()  // TODO
+        return self.token_id.clone()
     }
 
+
     /**
-        Compute the reputation of a pointer searching on all the output tree.
-    */
-    pub fn compute(&self, pointer: Option<&'b PointerBox<'a>>) -> f64 {
-        /*
-                This configuration don't allow to have assigned reputation and delegated reputation
-                at the same time.
-         */
+    Compute the reputation of a pointer searching on all the output tree.
+
+    This configuration don't allow to have assigned reputation and delegated reputation
+    at the same time.
+
+    - If there is a pointer_box, it's a leaf.
+      Recursive case: if there is pointer, uses the pointer_box's reputation.
+
+    - If there are any pointer box, it's a node.
+      Base case: if there is not pointer, computes the reputation directly.
+
+     */
+    pub fn compute(&self, pointer: &'b PointerBox<'a>) -> f64 {
         if self.pointer_box.is_some() {
-            // Recursive case: if there is pointer, uses the pointer_box's reputation.
-
-            println!("{:?}", ptr::addr_of!(self.pointer_box));
-            println!("{:?}", self.pointer_box.unwrap());
-            println!("------");
-            println!("{:?}", ptr::addr_of!(pointer));
-            println!("{:?}", self.pointer_box.unwrap());
-            println!("-----");
-            println!("{}", self.pointer_box == pointer);  // Says false but should be true.
-
-            if pointer.is_some() && self.pointer_box == pointer {
+            if self.pointer_box == Some(pointer) {
                 1.00
             } else {
-                0.00 // ptr.compute(None)  // TODO
+                self.pointer_box.unwrap().compute(pointer)
             }
         } else {
-            // Base case: if there is not pointer, computes the reputation directly.
             self.outputs
                 .iter()
                 .enumerate()
                 .map(
                     |(index, out)|
-                    self.expended_proportion(index) * (*out).compute(pointer)  // TODO (*out) to have only &ReputationProof, instead of &&ReputationProof. Is that correct?
+                        self.expended_proportion(index) * (*out).compute(pointer)
                 )
                 .sum()
         }
