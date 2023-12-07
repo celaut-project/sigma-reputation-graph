@@ -3,6 +3,12 @@ use pyo3::prelude::*;
 pub mod proof;
 pub mod tests;
 
+/**
+Pyo3 doesn't support wrap structs with lifetimes on the Python interpreter.
+
+https://pyo3.rs/main/class.html?highlight=lifetime#no-lifetime-parameters
+*/
+
 
 #[pyfunction]
 fn spend()
