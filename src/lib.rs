@@ -1,7 +1,7 @@
 use std::future::Future;
 use pyo3::prelude::*;
 use pyo3::types::PyString;
-use crate::database::spend::{store_on_db};
+use crate::database::spend::store_on_db;
 
 pub mod proof;
 pub mod database;
