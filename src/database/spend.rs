@@ -4,6 +4,7 @@ use surrealdb::Surreal;
 use serde::{Serialize, Deserialize};
 use surrealdb::engine::remote::ws::{Client, Ws};
 use surrealdb::sql::Thing;
+use surrealdb::sql::json;
 
 #[derive(Debug, Serialize)]
 struct ReputationProof {
@@ -31,7 +32,7 @@ async fn get_proof_db_id(id: &str) -> Result<String, Error> {
         
     db.use_ns(NAMESPACE).use_db(DATABASE).await.expect(DB_ERROR_MSG);
 
-    let sql = "CREATE count() FROM $id";
+    let sql = "SELECT count() FROM $id";
     let mut response = db.query(sql)
         .bind(("id", id))
         .await.expect(DB_ERROR_MSG);
@@ -51,6 +52,13 @@ async fn get_proof_db_id(id: &str) -> Result<String, Error> {
     }
 }
 
+
+/**
+ * Based on:
+ *  https://stackoverflow.com/a/62536772/11370826
+ * 
+ */
+
 #[tokio::main]
 pub async fn store_on_db(proof_id: Option<String>, amount: i64) 
     -> Result<String, std::io::Error> 
@@ -62,9 +70,14 @@ pub async fn store_on_db(proof_id: Option<String>, amount: i64)
 
     let id_result: Result<Option<String>, Error> = match proof_id {
         None => Ok(None),
-        Some(id) => match get_proof_db_id(id.as_str()) {
-            Ok(id) => Ok(Some(id)),
-            Err(error) => Err(error)
+        Some(id) => {
+            let response = tokio::task::spawn_blocking(move || {
+                get_proof_db_id(id.as_str())
+            }).await.expect("Blocking task panicked");
+            match response {
+                Ok(id) => Ok(Some(id)),
+                Err(error) => Err(error)
+            }
         }
     };
 
