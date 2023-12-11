@@ -2,9 +2,8 @@ use std::fmt::Debug;
 use std::io::Error;
 use surrealdb::Surreal;
 use serde::{Serialize, Deserialize};
-use surrealdb::engine::remote::ws::{Client, Ws};
+use surrealdb::engine::remote::ws::Ws;
 use surrealdb::sql::Thing;
-use surrealdb::sql::json;
 
 #[derive(Debug, Serialize)]
 struct ReputationProof {
@@ -18,6 +17,12 @@ struct Record {
     id: Thing,
 }
 
+#[derive(Debug, Deserialize)]
+struct CountRecord {
+    #[allow(dead_code)]
+    count: i16,
+}
+
 const DB_ERROR_MSG: &str = "Invalid response or error connection from the database";
 const NAMESPACE: &str = "local";
 const DATABASE: &str = "graph";
@@ -29,22 +34,33 @@ const RESOURCE: &str = "reputation_proof";
 async fn get_proof_db_id(id: &str) -> Result<String, Error> {
     let db = Surreal::new::<Ws>(ENDPOINT)
         .await.expect(DB_ERROR_MSG);
+
+    let local_id = RESOURCE.to_owned() + ":" + id;
         
     db.use_ns(NAMESPACE).use_db(DATABASE).await.expect(DB_ERROR_MSG);
 
     let sql = "SELECT count() FROM $id";
     let mut response = db.query(sql)
-        .bind(("id", id))
+        .bind(("id", &local_id))
         .await.expect(DB_ERROR_MSG);
 
-    let response: Option<u16> = response.take(0).expect(DB_ERROR_MSG);
-    
+
+    let response: Option<CountRecord> = response.take(0).expect(DB_ERROR_MSG);
+
     match response {
-        Some(1_u16..=u16::MAX) => Ok(RESOURCE.to_owned() + id),
-        Some(0) => Err(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("Amount cannot be zero"),
-        )),
+        Some(record) => match record.count {
+                1_i16..=i16::MAX => {
+                    Ok(local_id)
+                },
+                0 => Err(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    format!("Amount cannot be zero"),
+                )),
+                i16::MIN..=-1_i16 => Err(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    format!("Amount cannot negative"),
+                ))
+        }
         None => Err(std::io::Error::new(
             std::io::ErrorKind::Other,
             format!("Failed to retrieve amount from database"),
