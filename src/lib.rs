@@ -36,8 +36,6 @@ fn spend<'p>(py: Python<'p>, surreal_id: &PyString, amount: i64)
 {
     /*
         Params
-        - Ergo node url
-        - SurrealDB endpoint  https://surrealdb.com/docs/embedding/rust#connect
         - proof
         - amount
         - pointer
@@ -58,8 +56,6 @@ fn compute()
 {
     /*
         Params
-        - Ergo node url
-        - SurrealDB endpoint
         - pointer to calculate
     */
 
