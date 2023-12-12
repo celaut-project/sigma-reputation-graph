@@ -27,15 +27,6 @@ fn submit(_proof_id: Vec<u8>)
     // Submit all the proof with proof_id and all the childs.
 }
 
-fn from_py_to_proof_id(id: &PyString) -> Option<String>
-{
-    if id.len().unwrap() == 0 {
-        None
-    } else {
-        Some(id.to_str().unwrap().parse().unwrap())
-    }
-}
-
 /**
 The pointer box parameter must be on-chain.
  */
@@ -53,7 +44,8 @@ fn spend<'p>(py: Python<'p>, surreal_id: &PyString, amount: i64)
     */
 
     match store_on_db(
-        from_py_to_proof_id(surreal_id),
+        if surreal_id.len().unwrap() == 0 { None }
+            else { Some(surreal_id.to_str().unwrap().parse().unwrap()) },
         amount
     ) {
         Ok(id) => Ok(PyString::new(py, &id)),

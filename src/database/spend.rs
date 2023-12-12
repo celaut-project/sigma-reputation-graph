@@ -61,10 +61,11 @@ pub async fn store_on_db(pointer_box_id: Option<String>, amount: i64)
     let id_result: Result<Option<String>, Error> = match pointer_box_id {
         None => Ok(None),
         Some(id) => {
-            let response = tokio::task::spawn_blocking(move || {
+            match tokio::task::spawn_blocking(move || {
                 get_proof_db_id(id.as_str())
-            }).await.expect("Blocking task panicked");
-            match response {
+            })
+            .await.expect("Blocking task panicked")
+            {
                 Ok(id) => Ok(Some(id)),
                 Err(error) => Err(error)
             }
@@ -84,7 +85,8 @@ pub async fn store_on_db(pointer_box_id: Option<String>, amount: i64)
                 .expect(DB_ERROR_MSG);
 
             let raw_id = created.first().unwrap().id.to_string();
-            Ok(raw_id)
+            let proof_id = raw_id.split_at((RESOURCE.to_owned()+":").len()).1.to_string();
+            Ok(proof_id)
         },
         Err(error) => Err(error)
     }
