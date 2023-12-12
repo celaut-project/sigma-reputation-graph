@@ -7,7 +7,7 @@ use surrealdb::sql::Thing;
 
 #[derive(Debug, Serialize)]
 struct ReputationProof {
-    proof_id: Option<String>,
+    pointer_box_id: Option<String>,
     amount: i64
 }
 
@@ -50,7 +50,7 @@ async fn get_proof_db_id(id: &str) -> Result<String, Error> {
  */
 
 #[tokio::main]
-pub async fn store_on_db(proof_id: Option<String>, amount: i64) 
+pub async fn store_on_db(pointer_box_id: Option<String>, amount: i64) 
     -> Result<String, std::io::Error> 
 {
     let db = Surreal::new::<Ws>(ENDPOINT)
@@ -58,7 +58,7 @@ pub async fn store_on_db(proof_id: Option<String>, amount: i64)
         
     db.use_ns(NAMESPACE).use_db(DATABASE).await.expect(DB_ERROR_MSG);
 
-    let id_result: Result<Option<String>, Error> = match proof_id {
+    let id_result: Result<Option<String>, Error> = match pointer_box_id {
         None => Ok(None),
         Some(id) => {
             let response = tokio::task::spawn_blocking(move || {
@@ -72,13 +72,13 @@ pub async fn store_on_db(proof_id: Option<String>, amount: i64)
     };
 
     match id_result {
-        Ok(proof_id) => {
+        Ok(pointer_box_id) => {
             // Create a new person with a random id
             let created: Vec<Record> = db
                 .create(RESOURCE)
                 .content(ReputationProof {
-                    proof_id,
-                    amount
+                    pointer_box_id,
+                    amount  // TODO could check that amount <= proof->amount
                 })
                 .await
                 .expect(DB_ERROR_MSG);
