@@ -1,5 +1,6 @@
+use database::load::compute_from_db;
 use pyo3::prelude::*;
-use pyo3::types::PyString;
+use pyo3::types::{PyString, PyFloat};
 use crate::database::spend::store_on_db;
 
 pub mod proof;
@@ -51,7 +52,8 @@ fn spend<'p>(py: Python<'p>, surreal_id: &PyString, amount: i64)
 }
 
 #[pyfunction]
-fn compute<'p>(py: Python<'p>, surreal_id: &PyString)
+fn compute<'p>(py: Python<'p>, surreal_id: &PyString) 
+    -> Result<&'p PyFloat, std::io::Error>
 {
     /*
         Params
@@ -59,7 +61,11 @@ fn compute<'p>(py: Python<'p>, surreal_id: &PyString)
     */
 
     // Reads data from DB and load all the struct on memory.
-    println!("Compute function.");    
+    match compute_from_db(surreal_id.to_string())
+    {
+        Ok(result) => Ok(PyFloat::new(py, result)),
+        Err(error) => Err(error)
+    }
 }
 
 /*
