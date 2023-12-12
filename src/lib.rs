@@ -1,4 +1,3 @@
-use std::future::Future;
 use pyo3::prelude::*;
 use pyo3::types::PyString;
 use crate::database::spend::store_on_db;
@@ -52,7 +51,7 @@ fn spend<'p>(py: Python<'p>, surreal_id: &PyString, amount: i64)
 }
 
 #[pyfunction]
-fn compute()
+fn compute<'p>(py: Python<'p>, surreal_id: &PyString)
 {
     /*
         Params
@@ -60,7 +59,7 @@ fn compute()
     */
 
     // Reads data from DB and load all the struct on memory.
-    println!("Compute function.");
+    println!("Compute function.");    
 }
 
 /*

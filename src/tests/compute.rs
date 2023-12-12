@@ -54,7 +54,7 @@ mod compute {
         let proof1_1_1 = (&proof1_1).spend(30, Some(&pointer1)).expect("Oops, not Ok.");
         proof1_1.outputs.push(&proof1_1_1);
 
-        let proof1_1_2 =(&proof1_1).spend(30, Some(&pointer2)).expect("Oops, not Ok.");
+        let proof1_1_2 = (&proof1_1).spend(30, Some(&pointer2)).expect("Oops, not Ok.");
         proof1_1.outputs.push(&proof1_1_2);
         proof1.outputs.push(&proof1_1);
 
