@@ -35,7 +35,8 @@ pub async fn load_from_db(proof_id: String) -> Result<ReputationProof<'static>, 
 
     match response  {
         Some(repdb) => {
-            Ok(ReputationProof::create(Vec::new(), repdb.amount, None))
+            let proof = ReputationProof::create(Vec::new(), repdb.amount, None);
+            Ok(proof)
         },
         None => todo!(),
     }
