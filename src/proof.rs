@@ -32,7 +32,7 @@ impl<'a> PartialEq for ReputationProof<'a> {
 
 impl<'a> Debug for ReputationProof<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "ReputationProof {{ box id: {:?}", self.box_id)
+        write!(f, "ReputationProof box id: {:?}, with amount {}.", self.box_id, self.total_amount)
     }
 }
 

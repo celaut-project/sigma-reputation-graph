@@ -1,4 +1,4 @@
-use database::load::compute_from_db;
+use database::load::load_from_db;
 use pyo3::prelude::*;
 use pyo3::types::{PyString, PyFloat};
 use crate::database::spend::store_on_db;
@@ -61,9 +61,13 @@ fn compute<'p>(py: Python<'p>, surreal_id: &PyString)
     */
 
     // Reads data from DB and load all the struct on memory.
-    match compute_from_db(surreal_id.to_string())
+    match load_from_db(surreal_id.to_string())
     {
-        Ok(result) => Ok(PyFloat::new(py, result)),
+        Ok(proof) => {
+            println!("Reputation proof -> {:?}", proof);
+            // let result = proof.compute(pointer);
+            Ok(PyFloat::new(py, 1.00))
+        },
         Err(error) => Err(error)
     }
 }

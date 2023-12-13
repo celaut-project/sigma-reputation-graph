@@ -4,6 +4,7 @@ use surrealdb::Surreal;
 use serde::{Serialize, Deserialize};
 use surrealdb::engine::remote::ws::Ws;
 use surrealdb::sql::{Thing, Operation};
+use crate::proof::ReputationProof;
 
 
 const DB_ERROR_MSG: &str = "Invalid response or error connection from the database";
@@ -12,15 +13,14 @@ const DATABASE: &str = "graph";
 const ENDPOINT: &str = "127.0.0.1:8000";
 const RESOURCE: &str = "reputation_proof";
 
-
 #[derive(Debug, Serialize, Deserialize)]
-struct ReputationProof {
-    previous_proof_id: Option<String>,
+struct ReputationProofDB {
+    proof_id: Option<String>,
     amount: i64
 }
 
 #[tokio::main]
-pub async fn compute_from_db(proof_id: String) -> Result<f64, std::io::Error>
+pub async fn load_from_db(proof_id: String) -> Result<ReputationProof<'static>, std::io::Error>
 {
     let db = Surreal::new::<Ws>(ENDPOINT)
         .await.expect(DB_ERROR_MSG);
@@ -28,9 +28,15 @@ pub async fn compute_from_db(proof_id: String) -> Result<f64, std::io::Error>
     db.use_ns(NAMESPACE).use_db(DATABASE).await.expect(DB_ERROR_MSG);
 
     println!("Id -> {:?}", proof_id);
-    
-    let response: Option<ReputationProof> = db.select((RESOURCE, proof_id)).await.expect(DB_ERROR_MSG);
+
+    let response: Option<ReputationProofDB> = db.select((RESOURCE, proof_id)).await.expect(DB_ERROR_MSG);
 
     println!("Response -> {:?}", response);
-    Ok(1.00)
+
+    match response  {
+        Some(repdb) => {
+            Ok(ReputationProof::create(Vec::new(), repdb.amount, None))
+        },
+        None => todo!(),
+    }
 }
