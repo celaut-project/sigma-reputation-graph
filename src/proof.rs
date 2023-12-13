@@ -20,7 +20,7 @@ pub(crate) struct ReputationProof<'a> {
     box_id: Vec<u8>,
     token_id: Vec<u8>,
     total_amount: i64,
-    pub(crate) outputs: Vec<&'a ReputationProof<'a>>,
+    pub(crate) outputs: Vec<ReputationProof<'a>>,
     pointer_box: Option<&'a PointerBox<'a>>,
 }
 
@@ -41,7 +41,7 @@ impl <'a, 'b> ReputationProof<'a> {
         box_id: Vec<u8>,
         token_id: Vec<u8>,
         total_amount: i64,
-        outputs: Vec<&'b ReputationProof<'a>>,
+        outputs: Vec<ReputationProof<'a>>,
         pointer_box: Option<&'b PointerBox<'a>>,
     ) -> ReputationProof<'b> {
         ReputationProof {
