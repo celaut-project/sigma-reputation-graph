@@ -60,6 +60,8 @@ fn compute<'p>(py: Python<'p>, surreal_id: &PyString)
         - pointer to calculate
     */
 
+    // TODO -> En lugar del surreal_id debería de tener uno principal por defecto (la raíz), o bien crear uno cuyas dependencias sean aquellos que no tienen proof_id.
+
     // Reads data from DB and load all the struct on memory.
     match load_from_db(surreal_id.to_string())
     {

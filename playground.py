@@ -2,10 +2,10 @@ import os
 
 os.system("./install_python_lib.sh")
 
-import compute_reputation_graph
+from compute_reputation_graph import spend, compute
 
-v = compute_reputation_graph.spend("", 100)
+v = spend("", 100)
+spend(v, 50)
+spend(v, 30)
 
-print("\n On python3 -> ", v)
-
-m = compute_reputation_graph.compute(v)
+# m = compute_reputation_graph.compute(v)

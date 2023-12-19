@@ -29,13 +29,17 @@ pub async fn load_from_db(proof_id: String) -> Result<ReputationProof<'static>, 
 
     println!("Id -> {:?}", proof_id);
 
-    let response: Option<ReputationProofDB> = db.select((RESOURCE, proof_id)).await.expect(DB_ERROR_MSG);
+    let response: Option<ReputationProofDB> = {
+        db.select((RESOURCE, proof_id)).await.expect(DB_ERROR_MSG)
+    };
 
     println!("Response -> {:?}", response);
 
     match response  {
-        Some(repdb) => {
-            let proof = ReputationProof::create(Vec::new(), repdb.amount, None);
+        Some(r) => {
+            let proof = ReputationProof::create(Vec::new(),
+                                                r.amount, None);
+            // TODO aqui debería agregar las dependencias.
             Ok(proof)
         },
         None => todo!(),

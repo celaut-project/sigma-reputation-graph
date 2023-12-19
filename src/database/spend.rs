@@ -7,7 +7,6 @@ use surrealdb::sql::Thing;
 
 #[derive(Debug, Serialize)]
 struct ReputationProof {
-    previous_proof_id: Option<String>,
     amount: i64
 }
 
@@ -78,13 +77,17 @@ pub async fn store_on_db(previous_proof_id: Option<String>, amount: i64)
             let created: Vec<Record> = db
                 .create(RESOURCE)
                 .content(ReputationProof {
-                    previous_proof_id,
                     amount  // TODO could check that amount <= proof->amount
                 })
                 .await
                 .expect(DB_ERROR_MSG);
 
             let raw_id = created.first().unwrap().id.to_string();
+
+            // Add to the previous
+
+            // TODO SQL( RELATE previous_proof_id->leaf->raw_id )
+
             let proof_id = raw_id.split_at((RESOURCE.to_owned()+":").len()).1.to_string();
             Ok(proof_id)
         },
