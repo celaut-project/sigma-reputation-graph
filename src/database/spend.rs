@@ -72,25 +72,29 @@ pub async fn store_on_db(previous_proof_id: Option<String>, amount: i64)
     };
 
     match id_result {
-        Ok(previous_proof_id) => {
+        Ok(parent_id) => {
             // Create a new person with a random id
             let created: Vec<Record> = db
                 .create(RESOURCE)
                 .content(ReputationProof {
                     amount  // TODO could check that amount <= proof->amount
                 })
-                .await
-                .expect(DB_ERROR_MSG);
+                .await.expect(DB_ERROR_MSG);
 
             let raw_id = created.first().unwrap().id.to_string();
 
-            // Add to the previous
-
-            // TODO SQL( RELATE previous_proof_id->leaf->raw_id )
+            match parent_id {
+                None => {}
+                Some(parent_id) => {
+                    db.query(
+                        format!("RELATE {}->leaf->{}", parent_id, raw_id.to_string())
+                    ).await.expect(DB_ERROR_MSG);
+                }
+            }
 
             let proof_id = raw_id.split_at((RESOURCE.to_owned()+":").len()).1.to_string();
             Ok(proof_id)
-        },
+        }
         Err(error) => Err(error)
     }
 
