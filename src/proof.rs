@@ -68,11 +68,31 @@ impl <'a, 'b> ReputationProof<'a> {
         )
     }
 
-    fn can_be_spend(&self, amount: i64) -> bool
+
+    /**
+     Don't pub needed if push function can be used.
+    */
+    pub fn can_be_spend(&self, amount: i64) -> bool
     {
         self.outputs.iter().map(|out| out.total_amount).sum::<i64>()
             + amount <= self.total_amount
     }
+
+    /*          <!-- Difficult to use lifetimes here -->
+        pub fn push(mut self, child: ReputationProof) -> Result<ReputationProof<'b>, std::io::Error>
+        {
+            match self.can_be_spend(child.total_amount) {
+                true => {
+                    self.outputs.push(child);
+                    Ok(self)
+                },
+                false => Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidData,
+                    format!("Can't spend this amount {}", child.total_amount),
+                ))
+            }
+        }
+    */
 
     /**
         Creates a new reputation proof from the current one.

@@ -20,7 +20,7 @@ struct ReputationProofDB {
 }
 
 #[tokio::main]
-pub async fn load_from_db(proof_id: String) -> Result<ReputationProof<'static>, std::io::Error>
+pub async fn load_from_db(proof_id: String) -> Result<ReputationProof<'static>, Error>
 {
     let db = Surreal::new::<Ws>(ENDPOINT)
         .await.expect(DB_ERROR_MSG);
@@ -39,7 +39,17 @@ pub async fn load_from_db(proof_id: String) -> Result<ReputationProof<'static>, 
         Some(r) => {
             let proof = ReputationProof::create(Vec::new(),
                                                 r.amount, None);
-            // TODO aqui debería agregar las dependencias.
+            /* for dependency_id in db.select(leaf).from(proof_id):
+                 if let dependency = load_from_db(dependency_id)
+                 {
+                    if (&proof).can_be_spend(dependency.unwrap().amount) {
+                        proof.outputs.push(d);
+                    }
+                 }
+                 else {
+                    todo!();
+                 }
+             */
             Ok(proof)
         },
         None => todo!(),
