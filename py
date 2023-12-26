@@ -23,10 +23,10 @@ if args.test:
     from compute_reputation_graph import spend, compute
 
     v = spend("", 100)
-    spend(v, 50)
-    spend(v, 30)
+    print(spend(v, 50), '\n')
+    print(spend(v, 30), '\n')
 
-    # m = compute_reputation_graph.compute(v)
+    compute(v)
 
     print("Tests Ok!")
 
