@@ -30,7 +30,7 @@ pub async fn load_from_db(proof_id: String) -> Result<ReputationProof<'static>, 
     println!("Id -> {:?}", proof_id);
 
     let response: Option<ReputationProofDB> = {
-        db.select((RESOURCE, proof_id)).await.expect(DB_ERROR_MSG)
+        db.select((RESOURCE, proof_id.to_string())).await.expect(DB_ERROR_MSG)
     };
 
     println!("Response -> {:?}", response);
@@ -39,6 +39,13 @@ pub async fn load_from_db(proof_id: String) -> Result<ReputationProof<'static>, 
         Some(r) => {
             let proof = ReputationProof::create(Vec::new(),
                                                 r.amount, None);
+
+            let dependencies_response = db.query("SELECT ->leaf.out FROM $id")
+                .bind(("id", proof_id.to_string()))
+                .await.expect(DB_ERROR_MSG);
+
+            println!("dependencies -> {:?}", dependencies_response);
+
             /* for dependency_id in db.select(leaf).from(proof_id):
                  if let dependency = load_from_db(dependency_id)
                  {
