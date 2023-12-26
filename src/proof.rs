@@ -19,7 +19,7 @@ impl<'a, 'b> PointerBox<'a> {
 pub(crate) struct ReputationProof<'a> {
     box_id: Vec<u8>,
     token_id: Vec<u8>,
-    total_amount: i64,
+    pub(crate) total_amount: i64,
     pub(crate) outputs: Vec<ReputationProof<'a>>,
     pointer_box: Option<&'a PointerBox<'a>>,
 }
@@ -32,7 +32,8 @@ impl<'a> PartialEq for ReputationProof<'a> {
 
 impl<'a> Debug for ReputationProof<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "ReputationProof box id: {:?}, with amount {}.", self.box_id, self.total_amount)
+        write!(f, "ReputationProof box id: {:?}, with amount {}. \n  out -> {:?}.\n",
+               self.box_id, self.total_amount, self.outputs)
     }
 }
 

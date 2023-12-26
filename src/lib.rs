@@ -66,7 +66,7 @@ fn compute<'p>(py: Python<'p>, surreal_id: &PyString)
     match load_from_db(surreal_id.to_string())
     {
         Ok(proof) => {
-            println!("Reputation proof -> {:?}", proof);
+            println!("\n\n Final Reputation proof -> {:?}", proof);
             // let result = proof.compute(pointer);
             Ok(PyFloat::new(py, 1.00))
         },

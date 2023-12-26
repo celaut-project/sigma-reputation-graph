@@ -26,7 +26,7 @@ fn recursive(proof_id: String, db: Surreal<Client>) -> Pin<Box<dyn Future<Output
 {
     //  Why Box::pin? ->  https://doc.rust-lang.org/error_codes/E0733.html
     Box::pin(async move {
-        println!("Id -> {:?}", proof_id);
+        println!("\nId -> {:?}", proof_id);
 
         let response: Option<ReputationProofDB> = {
             db.select((RESOURCE, proof_id.to_string())).await.expect(DB_ERROR_MSG)
@@ -36,7 +36,7 @@ fn recursive(proof_id: String, db: Surreal<Client>) -> Pin<Box<dyn Future<Output
 
         match response  {
             Some(r) => {
-                let proof = ReputationProof::create(Vec::new(),
+                let mut proof = ReputationProof::create(Vec::new(),
                                                     r.amount, None);
 
                 // TODO Should be ->  let mut query: String = "SELECT ->leaf.out FROM reputation_proof:".to_owned();
@@ -51,24 +51,16 @@ fn recursive(proof_id: String, db: Surreal<Client>) -> Pin<Box<dyn Future<Output
                     println!("dependency -> {:?}\n", dependency_id);
 
                     match recursive(dependency_id, db.clone()).await {
-                        Ok(r) => println!("Reputation proof -> {:?}", r),
+                        Ok(r) => {
+                            println!("Reputation proof -> {:?}", r);
+
+                            if (&proof).can_be_spend(r.total_amount) {
+                                proof.outputs.push(r);
+                            }
+                        },
                         Err(err) => eprintln!("{:?}", err)
                     }
                 }
-
-                /* PSEUDO CODE
-
-                for dependency_id in dependencies:
-                     if let dependency = load_from_db(dependency_id)
-                     {
-                        if (&proof).can_be_spend(dependency.unwrap().amount) {
-                            proof.outputs.push(d);
-                        }
-                     }
-                     else {
-                        todo!();
-                     }
-                 */
                 Ok(proof)
             },
             None => todo!(),
