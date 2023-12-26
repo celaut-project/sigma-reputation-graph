@@ -4,6 +4,7 @@ use surrealdb::Surreal;
 use serde::{Serialize, Deserialize};
 use surrealdb::engine::remote::ws::Ws;
 use surrealdb::sql::Thing;
+use crate::proof::PointerBox;
 
 #[derive(Debug, Serialize)]
 struct ReputationProof {
@@ -49,8 +50,8 @@ async fn get_proof_db_id(id: &str) -> Result<String, Error> {
  */
 
 #[tokio::main]
-pub async fn store_on_db(previous_proof_id: Option<String>, amount: i64) 
-    -> Result<String, std::io::Error> 
+pub async fn store_on_db(previous_proof_id: Option<String>, amount: i64, pointer: PointerBox)
+    -> Result<String, Error>
 {
     let db = Surreal::new::<Ws>(ENDPOINT)
         .await.expect(DB_ERROR_MSG);

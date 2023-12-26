@@ -2,6 +2,7 @@ use database::load::load_from_db;
 use pyo3::prelude::*;
 use pyo3::types::{PyString, PyFloat};
 use crate::database::spend::store_on_db;
+use crate::proof::PointerBox;
 
 pub mod proof;
 pub mod database;
@@ -31,7 +32,7 @@ fn submit(_proof_id: Vec<u8>)
 The pointer box parameter must be on-chain.
  */
 #[pyfunction]
-fn spend<'p>(py: Python<'p>, surreal_id: &PyString, amount: i64)
+fn spend<'p>(py: Python<'p>, surreal_id: &PyString, amount: i64, pointer: &PyString)
    -> Result<&'p PyString, std::io::Error>
 {
     /*
@@ -44,7 +45,8 @@ fn spend<'p>(py: Python<'p>, surreal_id: &PyString, amount: i64)
     match store_on_db(
         if surreal_id.len().unwrap() == 0 { None }
             else { Some(surreal_id.to_str().unwrap().parse().unwrap()) },
-        amount
+        amount,
+        PointerBox::String(pointer.to_string()) // todo!() -> Could be PointerBox::ReputationProof too (if the string contains the format reputation_proof:...)
     ) {
         Ok(id) => Ok(PyString::new(py, &id)),
         Err(error) => Err(error)
@@ -52,7 +54,7 @@ fn spend<'p>(py: Python<'p>, surreal_id: &PyString, amount: i64)
 }
 
 #[pyfunction]
-fn compute<'p>(py: Python<'p>, surreal_id: &PyString) 
+fn compute<'p>(py: Python<'p>, surreal_id: &PyString, pointer: &PyString)
     -> Result<&'p PyFloat, std::io::Error>
 {
     /*
