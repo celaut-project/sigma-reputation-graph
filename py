@@ -22,12 +22,14 @@ if args.build:
 if args.test:
     from compute_reputation_graph import spend, compute
 
+    pointer = "github.com"
     v = spend("", 100)
-    print(spend(v, 50), '\n')
+    print(spend(v, 50, pointer), '\n')
     print(spend(v, 30), '\n')
 
-    compute(v)
+    r = compute(v, pointer)
 
-    print("Tests Ok!")
+    print(f"\nResult -> {r}")
+    print("\n\nTests Ok!")
 
 print("\nEnd.")

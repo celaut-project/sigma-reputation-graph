@@ -35,7 +35,7 @@ The pointer box parameter must be on-chain.
 fn spend<'p>(py: Python<'p>, surreal_id: &PyString, amount: i64, pointer: Option<&PyString>)
    -> Result<&'p PyString, std::io::Error>
 {
-    /*
+    /**
         Params
         - proof
         - amount
@@ -57,23 +57,24 @@ fn spend<'p>(py: Python<'p>, surreal_id: &PyString, amount: i64, pointer: Option
 }
 
 #[pyfunction]
-fn compute<'p>(py: Python<'p>, surreal_id: &PyString)
+fn compute<'p>(py: Python<'p>, root_id: &PyString, pointer: &PyString)
     -> Result<&'p PyFloat, std::io::Error>
 {
-    /*
+    /**
         Params
+        - root_id surreal_id of the root proof.
         - pointer to calculate
     */
 
-    // TODO -> En lugar del surreal_id debería de tener uno principal por defecto (la raíz), o bien crear uno cuyas dependencias sean aquellos que no tienen proof_id.
 
     // Reads data from DB and load all the struct on memory.
-    match load_from_db(surreal_id.to_string())
+    match load_from_db(root_id.to_string())
     {
         Ok(proof) => {
             println!("\n\n Final Reputation proof -> {:?}", proof);
-            // let result = proof.compute(pointer);
-            Ok(PyFloat::new(py, 1.00))
+            let pointer_box = PointerBox::String(pointer.to_string());
+            let result = proof.compute(&pointer_box);
+            Ok(PyFloat::new(py, result))
         },
         Err(error) => Err(error)
     }
