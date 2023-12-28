@@ -32,7 +32,7 @@ fn submit(_proof_id: Vec<u8>)
 The pointer box parameter must be on-chain.
  */
 #[pyfunction]
-fn spend<'p>(py: Python<'p>, surreal_id: &PyString, amount: i64, pointer: &PyString)
+fn spend<'p>(py: Python<'p>, surreal_id: &PyString, amount: i64, pointer: Option<&PyString>)
    -> Result<&'p PyString, std::io::Error>
 {
     /*
@@ -46,7 +46,10 @@ fn spend<'p>(py: Python<'p>, surreal_id: &PyString, amount: i64, pointer: &PyStr
         if surreal_id.len().unwrap() == 0 { None }
             else { Some(surreal_id.to_str().unwrap().parse().unwrap()) },
         amount,
-        PointerBox::String(pointer.to_string()) // todo!() -> Could be PointerBox::ReputationProof too (if the string contains the format reputation_proof:...)
+        match pointer {
+            Some(p) => Some(p.to_string()),
+            None => None
+        }
     ) {
         Ok(id) => Ok(PyString::new(py, &id)),
         Err(error) => Err(error)
@@ -54,7 +57,7 @@ fn spend<'p>(py: Python<'p>, surreal_id: &PyString, amount: i64, pointer: &PyStr
 }
 
 #[pyfunction]
-fn compute<'p>(py: Python<'p>, surreal_id: &PyString, pointer: &PyString)
+fn compute<'p>(py: Python<'p>, surreal_id: &PyString)
     -> Result<&'p PyFloat, std::io::Error>
 {
     /*

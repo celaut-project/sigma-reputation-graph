@@ -2,25 +2,11 @@ use std::fmt::Debug;
 use std::future::Future;
 use std::io::Error;
 use std::pin::Pin;
-use serde::{Serialize, Deserialize};
 use surrealdb::engine::remote::ws::{Client, Ws};
 use surrealdb::sql::{Thing};
 use surrealdb::Surreal;
-use tokio::runtime::Handle;
+use crate::database::global::{*};
 use crate::proof::ReputationProof;
-
-
-const DB_ERROR_MSG: &str = "Invalid response or error connection from the database";
-const NAMESPACE: &str = "local";
-const DATABASE: &str = "graph";
-const ENDPOINT: &str = "127.0.0.1:8000";
-const RESOURCE: &str = "reputation_proof";
-
-#[derive(Debug, Serialize, Deserialize)]
-struct ReputationProofDB {
-    proof_id: Option<String>,
-    amount: i64
-}
 
 fn recursive(proof_id: String, db: Surreal<Client>) -> Pin<Box<dyn Future<Output = Result<ReputationProof<'static>, Error>>>>
 {
@@ -41,7 +27,7 @@ fn recursive(proof_id: String, db: Surreal<Client>) -> Pin<Box<dyn Future<Output
 
                 // TODO Should be ->  let mut query: String = "SELECT ->leaf.out FROM reputation_proof:".to_owned();
                 let mut query: String = "SELECT out FROM leaf WHERE in = reputation_proof:".to_owned();
-                query.push_str(&*proof_id.to_string());
+                query.push_str(&*proof_id.to_string()); // TODO use format! like spend.rs
                 let mut dependencies_response = db.query(query)
                     .await.expect(DB_ERROR_MSG);
 

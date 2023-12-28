@@ -1,30 +1,10 @@
 use std::fmt::Debug;
 use std::io::Error;
 use surrealdb::Surreal;
-use serde::{Serialize, Deserialize};
 use surrealdb::engine::remote::ws::Ws;
-use surrealdb::sql::Thing;
-use crate::proof::PointerBox;
+use crate::database::global::{*};
 
-#[derive(Debug, Serialize)]
-struct ReputationProof {
-    amount: i64
-}
-
-#[derive(Debug, Deserialize)]
-struct Record {
-    #[allow(dead_code)]
-    id: Thing,
-}
-
-const DB_ERROR_MSG: &str = "Invalid response or error connection from the database";
-const NAMESPACE: &str = "local";
-const DATABASE: &str = "graph";
-const ENDPOINT: &str = "127.0.0.1:8000";
-const RESOURCE: &str = "reputation_proof";
-
-
-#[tokio::main]
+#[tokio::main] // Based on: https://stackoverflow.com/a/62536772/11370826  , but should use https://doc.rust-lang.org/error_codes/E0733.html  instead.
 async fn get_proof_db_id(id: &str) -> Result<String, Error> {
     let db = Surreal::new::<Ws>(ENDPOINT)
         .await.expect(DB_ERROR_MSG);
@@ -43,14 +23,10 @@ async fn get_proof_db_id(id: &str) -> Result<String, Error> {
 }
 
 
-/**
- * Based on:
- *  https://stackoverflow.com/a/62536772/11370826
- * 
- */
+
 
 #[tokio::main]
-pub async fn store_on_db(previous_proof_id: Option<String>, amount: i64, pointer: PointerBox)
+pub async fn store_on_db(previous_proof_id: Option<String>, amount: i64, pointer: Option<String>) // TODO What format should've the pointer to be upload to the DB?
     -> Result<String, Error>
 {
     let db = Surreal::new::<Ws>(ENDPOINT)
@@ -61,7 +37,7 @@ pub async fn store_on_db(previous_proof_id: Option<String>, amount: i64, pointer
     let id_result: Result<Option<String>, Error> = match previous_proof_id {
         None => Ok(None),
         Some(id) => {
-            match tokio::task::spawn_blocking(move || {
+            match tokio::task::spawn_blocking(move || { // TODO use https://doc.rust-lang.org/error_codes/E0733.html like load.rs
                 get_proof_db_id(id.as_str())
             })
             .await.expect("Blocking task panicked")
@@ -77,7 +53,8 @@ pub async fn store_on_db(previous_proof_id: Option<String>, amount: i64, pointer
             // Create a new person with a random id
             let created: Vec<Record> = db
                 .create(RESOURCE)
-                .content(ReputationProof {
+                .content(ReputationProofDB {
+                    proof_id: pointer,
                     amount  // TODO could check that amount <= proof->amount
                 })
                 .await.expect(DB_ERROR_MSG);
