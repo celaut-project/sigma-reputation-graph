@@ -145,7 +145,7 @@ impl <'a, 'b> ReputationProof<'a> {
     */
     pub fn compute(&self, pointer: &'b PointerBox<'a>) -> f64 {
         // TODO -> Add backtracking.
-        println!("\n\n {:?}", pointer);
+        println!("\n\n {:?} - {:?}", self.pointer_box, pointer);
         if self.pointer_box.is_some() {
             println!("{:?} - {:?}", self.pointer_box, Some(pointer));
             if self.pointer_box == Some(pointer) {

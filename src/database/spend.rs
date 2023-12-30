@@ -54,7 +54,7 @@ pub async fn store_on_db(previous_proof_id: Option<String>, amount: i64, pointer
             let created: Vec<Record> = db
                 .create(RESOURCE)
                 .content(ReputationProofDB {
-                    proof_id: pointer,
+                    pointer: pointer,
                     amount  // TODO could check that amount <= proof->amount
                 })
                 .await.expect(DB_ERROR_MSG);

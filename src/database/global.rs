@@ -9,7 +9,7 @@ pub(crate) const RESOURCE: &str = "reputation_proof";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct ReputationProofDB {
-    pub(crate) proof_id: Option<String>,
+    pub(crate) pointer: Option<String>,
     pub(crate) amount: i64
 }
 
