@@ -1,28 +1,25 @@
-use std::fmt::Debug;
+use std::fmt::{Debug, format};
+use std::future::Future;
 use std::io::Error;
+use std::pin::Pin;
 use surrealdb::Surreal;
-use surrealdb::engine::remote::ws::Ws;
+use surrealdb::engine::remote::ws::{Client, Ws};
 use crate::database::global::{*};
+use crate::proof::ReputationProof;
 
-#[tokio::main] // Based on: https://stackoverflow.com/a/62536772/11370826  , but should use https://doc.rust-lang.org/error_codes/E0733.html  instead.
-async fn get_proof_db_id(id: &str) -> Result<String, Error> {
-    let db = Surreal::new::<Ws>(ENDPOINT)
-        .await.expect(DB_ERROR_MSG);
-        
-    db.use_ns(NAMESPACE).use_db(DATABASE).await.expect(DB_ERROR_MSG);
-
-    let response: Option<Record> = db.select((RESOURCE, id)).await.expect(DB_ERROR_MSG);
-
-    match response {
-        Some(_) => Ok(RESOURCE.to_owned() + ":" + id),
-        None => Err(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("Failed to retrieve from database"),
-        )),
-    }
+fn get_proof_db_id(id: String, db: Surreal<Client>) -> Pin<Box<dyn Future<Output = Result<String, Error>>>>
+{
+    Box::pin(async move {
+        let response: Option<Record> = db.select((RESOURCE, id.as_str())).await.expect(DB_ERROR_MSG);
+        match response {
+            Some(_) => Ok(format!("{}:{}", RESOURCE, id)),
+            None => Err(Error::new(
+                std::io::ErrorKind::Other,
+                "Failed to retrieve from database".to_string(),
+            )),
+        }
+    })
 }
-
-
 
 
 #[tokio::main]
@@ -37,11 +34,7 @@ pub async fn store_on_db(previous_proof_id: Option<String>, amount: i64, pointer
     let id_result: Result<Option<String>, Error> = match previous_proof_id {
         None => Ok(None),
         Some(id) => {
-            match tokio::task::spawn_blocking(move || { // TODO use https://doc.rust-lang.org/error_codes/E0733.html like load.rs
-                get_proof_db_id(id.as_str())
-            })
-            .await.expect("Blocking task panicked")
-            {
+            match get_proof_db_id(id, db.clone()).await {
                 Ok(id) => Ok(Some(id)),
                 Err(error) => Err(error)
             }
