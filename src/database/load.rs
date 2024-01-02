@@ -24,13 +24,13 @@ fn recursive(proof_id: String, db: Surreal<Client>) -> Pin<Box<dyn Future<Output
             Some(r) => {
                 let pointer_box = r.pointer.map_or_else(
                     || None,
-                    |s| Some(PointerBox::String(s))
+                    |s| Some(PointerBox::String(s)) // TODO add proof enum case.
                 );
-                let pointer = (&pointer_box).as_ref();   // ¿ Option<T> -> Option<&T> ?
                 let mut proof = ReputationProof::create(Vec::new(),
-                                                    r.amount, None);
+                                                    r.amount, pointer_box
+                );
 
-                // TODO Should be ->  let mut query: String = "SELECT ->leaf.out FROM reputation_proof:".to_owned();
+                // TODO Should be better ->  let mut query: String = "SELECT ->leaf.out FROM reputation_proof:".to_owned();
                 let mut query: String = "SELECT out FROM leaf WHERE in = reputation_proof:".to_owned();
                 query.push_str(&*proof_id.to_string()); // TODO use format! like spend.rs
                 let mut dependencies_response = db.query(query)
