@@ -50,23 +50,29 @@ if args.test:
     def performance_test():
         print("\n\nPerformance test")
 
-        MAX_DEPTH: int = 20
-        MAX_AMOUNT: int = 500
+        MAX_DEPTH: int = 30
+        MAX_AMOUNT: int = 1200
         MIN_AMOUNT: int = 10
 
         global proof_number
         proof_number = 0
+
+        global leaf_number
+        leaf_number = 0
 
         random_pointer: Callable[[], str] = \
             lambda: ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(8))
 
         def random_proofs(parent: str = "", amount: int = 0, depth: int = 0) -> Tuple[str, List[str]]:
             global proof_number
+            global leaf_number
             _pointer = random_pointer() if randint(0, 1) else None
             _pointers = [_pointer] if _pointer else []
             _v: str = spend(parent, amount, _pointer)
             proof_number += 1
-            if depth < MAX_DEPTH:
+            if depth >= MAX_DEPTH or amount <= MIN_AMOUNT:
+                leaf_number += 1  # <- leaf
+            else:
                 while amount > MIN_AMOUNT:
                     _amount = randint(MIN_AMOUNT, max(int(amount/5), MIN_AMOUNT))
                     _, _p = random_proofs(parent=_v, amount=_amount, depth=depth + 1)
@@ -87,7 +93,8 @@ if args.test:
             print(f"\nResult -> {r} with the pointer {pointer}, time lapse -> {time_lapse}")
 
         print(f"\n      Performance: "
-              f"\n          nº -> {proof_number}, "
+              f"\n          nº proofs -> {proof_number}, "
+              f"\n          nº leafs  -> {leaf_number}, "
               f"\n          avg time lapse -> {mean(times)}, "
               f"\n          SCORE -> {proof_number/mean(times)}.")
 
