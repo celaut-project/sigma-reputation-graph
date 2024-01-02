@@ -6,7 +6,7 @@ use surrealdb::engine::remote::ws::{Client, Ws};
 use surrealdb::sql::{Thing};
 use surrealdb::Surreal;
 use crate::database::global::{*};
-use crate::proof::ReputationProof;
+use crate::proof::{ReputationProof, PointerBox};
 
 fn recursive(proof_id: String, db: Surreal<Client>) -> Pin<Box<dyn Future<Output = Result<ReputationProof<'static>, Error>>>>
 {
@@ -22,6 +22,11 @@ fn recursive(proof_id: String, db: Surreal<Client>) -> Pin<Box<dyn Future<Output
 
         match response  {
             Some(r) => {
+                let pointer_box = r.pointer.map_or_else(
+                    || None,
+                    |s| Some(PointerBox::String(s))
+                );
+                let pointer = (&pointer_box).as_ref();   // ¿ Option<T> -> Option<&T> ?
                 let mut proof = ReputationProof::create(Vec::new(),
                                                     r.amount, None);
 

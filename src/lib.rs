@@ -73,7 +73,7 @@ fn compute<'p>(py: Python<'p>, root_id: &PyString, pointer: &PyString)
         Ok(proof) => {
             println!("\n\n Final Reputation proof -> {:?}", proof);
             let pointer_box = PointerBox::String(pointer.to_string());
-            let result = proof.compute(&pointer_box);
+            let result = proof.compute(pointer_box);
             Ok(PyFloat::new(py, result))
         },
         Err(error) => Err(error)

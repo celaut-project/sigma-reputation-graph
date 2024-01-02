@@ -1,13 +1,13 @@
 use std::fmt::{Debug, Formatter};
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub(crate) enum PointerBox<'a> {
     ReputationProof(&'a ReputationProof<'a>),
     String(String)
 }
 
-impl<'a, 'b> PointerBox<'a> {
-    fn compute(&self, pointer: &'b PointerBox<'a>) -> f64 {
+impl<'a> PointerBox<'a> {
+    fn compute(&self, pointer: PointerBox<'a>) -> f64 {
         match self {
             PointerBox::ReputationProof(proof) => proof.compute(pointer),
             PointerBox::String(..) => 0.00
@@ -21,7 +21,7 @@ pub(crate) struct ReputationProof<'a> {
     token_id: Vec<u8>,
     pub(crate) total_amount: i64,
     pub(crate) outputs: Vec<ReputationProof<'a>>,
-    pointer_box: Option<&'a PointerBox<'a>>,
+    pointer_box: Option<PointerBox<'a>>,
 }
 
 impl<'a> PartialEq for ReputationProof<'a> {
@@ -37,14 +37,14 @@ impl<'a> Debug for ReputationProof<'a> {
     }
 }
 
-impl <'a, 'b> ReputationProof<'a> {
+impl <'a> ReputationProof<'a> {
     fn new(
         box_id: Vec<u8>,
         token_id: Vec<u8>,
         total_amount: i64,
         outputs: Vec<ReputationProof<'a>>,
-        pointer_box: Option<&'b PointerBox<'a>>,
-    ) -> ReputationProof<'b> {
+        pointer_box: Option<PointerBox<'a>>,
+    ) -> ReputationProof<'a> {
         ReputationProof {
             box_id,
             token_id,
@@ -60,8 +60,8 @@ impl <'a, 'b> ReputationProof<'a> {
     pub fn create(
         box_id: Vec<u8>,
         total_amount: i64,
-        pointer_box: Option<&'b PointerBox<'a>>,
-    ) -> ReputationProof<'b> {
+        pointer_box: Option<PointerBox<'a>>,
+    ) -> ReputationProof<'a> {
         return ReputationProof::new(
             box_id, vec![],
             total_amount,  vec![],
@@ -101,8 +101,8 @@ impl <'a, 'b> ReputationProof<'a> {
     */
     pub fn spend(&self,
                 amount: i64,
-                pointer_box: Option<&'b PointerBox<'a>>,
-    ) -> Result<ReputationProof<'b>, std::io::Error> {
+                pointer_box: Option<PointerBox<'a>>,
+    ) -> Result<ReputationProof<'a>, std::io::Error> {
         match self.can_be_spend(amount) {
             true => Ok(
                 ReputationProof::new(
@@ -143,15 +143,15 @@ impl <'a, 'b> ReputationProof<'a> {
         Base case: if there is not pointer, computes the reputation directly.
 
     */
-    pub fn compute(&self, pointer: &'b PointerBox<'a>) -> f64 {
+    pub fn compute(&self, pointer: PointerBox<'a>) -> f64 {
         // TODO -> Add backtracking.
         println!("\n\n {:?} - {:?}", self.pointer_box, pointer);
         if self.pointer_box.is_some() {
-            println!("{:?} - {:?}", self.pointer_box, Some(pointer));
-            if self.pointer_box == Some(pointer) {
+            println!("{:?} - {:?}", self.pointer_box.clone(), Some(pointer.clone()));
+            if self.pointer_box == Some(pointer.clone()) {
                 1.00
             } else {
-                self.pointer_box.unwrap().compute(pointer)
+                self.pointer_box.as_ref().unwrap().compute(pointer.clone())
             }
         } else {
             self.outputs
@@ -159,7 +159,7 @@ impl <'a, 'b> ReputationProof<'a> {
                 .enumerate()
                 .map(
                     |(index, out)|
-                        self.expended_proportion(index) * (*out).compute(pointer)
+                        self.expended_proportion(index) * (*out).compute(pointer.clone())
                 )
                 .sum()
         }
