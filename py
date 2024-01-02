@@ -30,14 +30,22 @@ if args.test:
 
     def simple_test():
         print("\n\nSimple test")
-        pointer = "github.com"
+        gh_pointer = "github.com"
+        sdb_pointer = "surrealdb.com"
+        rl_pointer = "rust-lang.org"
         v = spend("", 100)
-        spend(v, 50, pointer)
-        spend(v, 30)
+        v1 = spend(v, 50)
+        v12 = spend(v1, 15, sdb_pointer)
+        v13 = spend(v1, 20)
+        v1234 = spend(v13, 10, gh_pointer)
+        v2 = spend(v, 30)
+        v23 = spend(v2, 8, rl_pointer)
 
-        r = compute(v, pointer)
+        assert 0.1 == compute(v, gh_pointer)
+        assert 0.15 == compute(v, sdb_pointer)
+        assert 0.08 == compute(v, rl_pointer)
 
-        print(f"\nResult -> {r}")
+        print("Works well!")
 
     def performance_test():
         print("\n\nPerformance test")
