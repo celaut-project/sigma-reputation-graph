@@ -12,13 +12,10 @@ fn recursive(proof_id: String, db: Surreal<Client>) -> Pin<Box<dyn Future<Output
 {
     //  Why Box::pin? ->  https://doc.rust-lang.org/error_codes/E0733.html
     Box::pin(async move {
-        println!("\nId -> {:?}", proof_id);
 
         let response: Option<ReputationProofDB> = {
             db.select((RESOURCE, proof_id.to_string())).await.expect(DB_ERROR_MSG)
         };
-
-        println!("Response -> {:?}", response);
 
         match response  {
             Some(r) => {
@@ -38,11 +35,9 @@ fn recursive(proof_id: String, db: Surreal<Client>) -> Pin<Box<dyn Future<Output
                 let dependencies: Vec<Thing> = dependencies_response.take("out").expect(DB_ERROR_MSG);
                 for dependency in dependencies {
                     let dependency_id = dependency.id.to_raw();
-                    println!("dependency -> {:?}\n", dependency_id);
 
                     match recursive(dependency_id, db.clone()).await {
                         Ok(r) => {
-                            println!("Reputation proof -> {:?}", r);
 
                             if (&proof).can_be_spend(r.total_amount) {
                                 proof.outputs.push(r);
