@@ -31,8 +31,7 @@ fn recursive(proof_id: String, db: Surreal<Client>) -> Pin<Box<dyn Future<Output
                 );
 
                 // TODO Should be better ->  let mut query: String = "SELECT ->leaf.out FROM reputation_proof:".to_owned();
-                let mut query: String = "SELECT out FROM leaf WHERE in = reputation_proof:".to_owned();
-                query.push_str(&*proof_id.to_string()); // TODO use format! like spend.rs
+                let query = format!("SELECT out FROM leaf WHERE in = reputation_proof:{}", proof_id.to_string());
                 let mut dependencies_response = db.query(query)
                     .await.expect(DB_ERROR_MSG);
 

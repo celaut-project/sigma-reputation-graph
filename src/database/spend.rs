@@ -26,7 +26,7 @@ async fn get_proof_db_id(id: &str) -> Result<String, Error> {
 
 
 #[tokio::main]
-pub async fn store_on_db(previous_proof_id: Option<String>, amount: i64, pointer: Option<String>) // TODO What format should've the pointer to be upload to the DB?
+pub async fn store_on_db(previous_proof_id: Option<String>, amount: i64, pointer: Option<String>)
     -> Result<String, Error>
 {
     let db = Surreal::new::<Ws>(ENDPOINT)
