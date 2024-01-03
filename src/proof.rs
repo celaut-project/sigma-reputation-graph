@@ -1,7 +1,7 @@
 use std::fmt::{Debug, Formatter};
 
 #[derive(PartialEq, Debug, Clone)]
-pub(crate) enum PointerBox<'a> {
+pub enum PointerBox<'a> {
     ReputationProof(&'a ReputationProof<'a>),
     String(String)
 }
@@ -16,7 +16,7 @@ impl<'a> PointerBox<'a> {
 }
 
 #[derive(Clone)]
-pub(crate) struct ReputationProof<'a> {
+pub struct ReputationProof<'a> {
     box_id: Vec<u8>,
     token_id: Vec<u8>,
     pub(crate) total_amount: i64,
