@@ -1,4 +1,6 @@
 
+#[warn(unused_imports)]
+#[warn(dead_code)]
 mod compute {
     use crate::proof::{ReputationProof, PointerBox};
     use assert_approx_eq::assert_approx_eq;

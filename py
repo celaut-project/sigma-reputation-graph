@@ -20,7 +20,7 @@ if args.build:
     # Execute the commands
     os.system("pip3 uninstall compute_reputation_graph -y")
     os.system("rm -rf target/wheels/*")
-    os.system("maturin build")
+    os.system("/usr/bin/python3 -m maturin build")
     os.system("pip3 install target/wheels/*")
 
     print("Build Ok!")

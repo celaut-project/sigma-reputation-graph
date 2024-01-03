@@ -29,19 +29,18 @@ fn submit(_proof_id: Vec<u8>)
 }
 
 /**
+    Params
+    - proof
+    - amount
+    - pointer
+*/
+/**
 The pointer box parameter must be on-chain.
  */
 #[pyfunction]
 fn spend<'p>(py: Python<'p>, surreal_id: &PyString, amount: i64, pointer: Option<&PyString>)
    -> Result<&'p PyString, std::io::Error>
 {
-    /**
-        Params
-        - proof
-        - amount
-        - pointer
-    */
-
     match store_on_db(
         if surreal_id.len().unwrap() == 0 { None }
             else { Some(surreal_id.to_str().unwrap().parse().unwrap()) },
@@ -56,17 +55,16 @@ fn spend<'p>(py: Python<'p>, surreal_id: &PyString, amount: i64, pointer: Option
     }
 }
 
+
+/**
+Params
+- root_id surreal_id of the root proof.
+- pointer to calculate
+ */
 #[pyfunction]
 fn compute<'p>(py: Python<'p>, root_id: &PyString, pointer: &PyString)
     -> Result<&'p PyFloat, std::io::Error>
 {
-    /**
-        Params
-        - root_id surreal_id of the root proof.
-        - pointer to calculate
-    */
-
-
     // Reads data from DB and load all the struct on memory.
     match load_from_db(root_id.to_string())
     {

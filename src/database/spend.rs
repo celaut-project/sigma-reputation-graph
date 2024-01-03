@@ -1,11 +1,9 @@
-use std::fmt::{Debug, format};
 use std::future::Future;
 use std::io::Error;
 use std::pin::Pin;
 use surrealdb::Surreal;
 use surrealdb::engine::remote::ws::{Client, Ws};
 use crate::database::global::{*};
-use crate::proof::ReputationProof;
 
 fn get_proof_db_id(id: String, db: Surreal<Client>) -> Pin<Box<dyn Future<Output = Result<String, Error>>>>
 {
