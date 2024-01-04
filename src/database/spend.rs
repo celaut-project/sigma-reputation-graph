@@ -1,11 +1,11 @@
 use std::future::Future;
 use std::io::Error;
 use std::pin::Pin;
+use surrealdb::engine::local::{Db, File};
 use surrealdb::Surreal;
-use surrealdb::engine::remote::ws::{Client, Ws};
 use crate::database::global::{*};
 
-fn get_proof_db_id(id: String, db: Surreal<Client>) -> Pin<Box<dyn Future<Output = Result<String, Error>>>>
+fn get_proof_db_id(id: String, db: Surreal<Db>) -> Pin<Box<dyn Future<Output = Result<String, Error>>>>
 {
     Box::pin(async move {
         let response: Option<Record> = db.select((RESOURCE, id.as_str())).await.expect(DB_ERROR_MSG);
@@ -24,7 +24,7 @@ fn get_proof_db_id(id: String, db: Surreal<Client>) -> Pin<Box<dyn Future<Output
 pub async fn store_on_db(previous_proof_id: Option<String>, amount: i64, pointer: Option<String>)
     -> Result<String, Error>
 {
-    let db = Surreal::new::<Ws>(ENDPOINT)
+    let db = Surreal::new::<File>(ENDPOINT)
         .await.expect(DB_ERROR_MSG);
         
     db.use_ns(NAMESPACE).use_db(DATABASE).await.expect(DB_ERROR_MSG);

@@ -33,7 +33,7 @@ mod surreal {
     #[test]
     async fn t() -> surrealdb::Result<()> {
         // Create database connection
-        let db = Surreal::new::<File>("test.db").await?;
+        let db = Surreal::new::<File>("/home/jse/Projects/compute-reputation-graph/test.db").await?;
 
         // Select a specific namespace / database
         db.use_ns("test").use_db("test").await?;
