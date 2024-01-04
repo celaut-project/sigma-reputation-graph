@@ -2,7 +2,7 @@ use database::load::load_from_db;
 use pyo3::prelude::*;
 use pyo3::types::{PyString, PyFloat};
 use crate::database::spend::store_on_db;
-use crate::proof::PointerBox;
+use crate::proof::pointer_box::PointerBox;
 
 pub mod proof;
 pub mod database;

@@ -5,7 +5,8 @@ use surrealdb::engine::local::{Db, File};
 use surrealdb::sql::{Thing};
 use surrealdb::Surreal;
 use crate::database::global::{*};
-use crate::proof::{ReputationProof, PointerBox};
+use crate::proof::reputation_proof::ReputationProof;
+use crate::proof::pointer_box::PointerBox;
 
 fn recursive(proof_id: String, db: Surreal<Db>) -> Pin<Box<dyn Future<Output = Result<ReputationProof<'static>, Error>>>>
 {

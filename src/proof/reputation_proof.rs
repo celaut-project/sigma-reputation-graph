@@ -1,19 +1,5 @@
 use std::fmt::{Debug, Formatter};
-
-#[derive(PartialEq, Debug, Clone)]
-pub enum PointerBox<'a> {
-    ReputationProof(&'a ReputationProof<'a>),
-    String(String)
-}
-
-impl<'a> PointerBox<'a> {
-    fn compute(&self, pointer: PointerBox<'a>) -> f64 {
-        match self {
-            PointerBox::ReputationProof(proof) => proof.compute(pointer),
-            PointerBox::String(..) => 0.00
-        }
-    }
-}
+use crate::proof::pointer_box::{PointerBox};
 
 #[derive(Clone)]
 pub struct ReputationProof<'a> {
@@ -55,8 +41,8 @@ impl <'a> ReputationProof<'a> {
     }
 
     /**
-        Creates a new reputation proof from scratch.
-    */
+    Creates a new reputation proof from scratch.
+     */
     pub fn create(
         box_id: Vec<u8>,
         total_amount: i64,
@@ -71,8 +57,8 @@ impl <'a> ReputationProof<'a> {
 
 
     /**
-     Don't pub needed if push function can be used.
-    */
+    Don't pub needed if push function can be used.
+     */
     pub fn can_be_spend(&self, amount: i64) -> bool
     {
         self.outputs.iter().map(|out| out.total_amount).sum::<i64>()
@@ -96,12 +82,12 @@ impl <'a> ReputationProof<'a> {
     */
 
     /**
-        Creates a new reputation proof from the current one.
-        Raises exceptions if any rule is violated.
-    */
+    Creates a new reputation proof from the current one.
+    Raises exceptions if any rule is violated.
+     */
     pub fn spend(&self,
-                amount: i64,
-                pointer_box: Option<PointerBox<'a>>,
+                 amount: i64,
+                 pointer_box: Option<PointerBox<'a>>,
     ) -> Result<ReputationProof<'a>, std::io::Error> {
         match self.can_be_spend(amount) {
             true => Ok(
@@ -119,8 +105,8 @@ impl <'a> ReputationProof<'a> {
     }
 
     /**
-        Get the proportion of reputation that have the out_index output over the total.
-    */
+    Get the proportion of reputation that have the out_index output over the total.
+     */
     fn expended_proportion(&self, out_index: usize) -> f64 {
         return self.outputs[out_index].total_amount as f64 / self.total_amount as f64;
     }
@@ -131,18 +117,18 @@ impl <'a> ReputationProof<'a> {
 
 
     /**
-        Compute the reputation of a pointer searching on all the output tree.
+    Compute the reputation of a pointer searching on all the output tree.
 
-        This configuration don't allow to have assigned reputation and delegated reputation
-        at the same time.
+    This configuration don't allow to have assigned reputation and delegated reputation
+    at the same time.
 
-        - If there is a pointer_box, it's a leaf.
-        Recursive case: if there is pointer, uses the pointer_box's reputation.
+    - If there is a pointer_box, it's a leaf.
+    Recursive case: if there is pointer, uses the pointer_box's reputation.
 
-        - If there are any pointer box, it's a node.
-        Base case: if there is not pointer, computes the reputation directly.
+    - If there are any pointer box, it's a node.
+    Base case: if there is not pointer, computes the reputation directly.
 
-    */
+     */
     pub fn compute(&self, pointer: PointerBox<'a>) -> f64 {
         // TODO -> Add backtracking.
         if self.pointer_box.is_some() {
