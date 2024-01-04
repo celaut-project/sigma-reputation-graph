@@ -6,7 +6,6 @@ use crate::proof::pointer_box::PointerBox;
 
 pub mod proof;
 pub mod database;
-pub mod tests;
 
 /**
 Pyo3 doesn't support wrap structs with lifetimes on the Python interpreter.
