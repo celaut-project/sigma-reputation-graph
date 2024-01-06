@@ -21,3 +21,4 @@ assert_approx_eq = "1.0"
 surrealdb = { version = "1.0.0", features = ["kv-mem", "kv-rocksdb"] }
 serde = { version = "1.0.193", features = ["derive"] }
 futures = "0.3.29"
+openssl = { version = "0.10", features = ["vendored"] }
