@@ -18,15 +18,18 @@ args = parser.parse_args()
 
 if args.build:
     # Execute the commands
-    os.system("pip3 uninstall compute_reputation_graph -y")
-    os.system("rm -rf target/wheels/*")
+    try:
+        os.system("pip3 uninstall reputation_graph -y")
+        os.system("rm target/wheels/*")
+    except:
+        pass
     os.system("/usr/bin/python3 -m maturin build")
     os.system("pip3 install target/wheels/*")
 
     print("Build Ok!")
 
 if args.test:
-    from compute_reputation_graph import spend, compute
+    from reputation_graph import spend, compute
 
     def simple_test():
         print("\n\nSimple test")
