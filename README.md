@@ -1,4 +1,4 @@
-# <link>reputation-graph</link>
+# <link>Sigma Reputation Graph</link>
 
 This project designed to store an acyclic graph composed of objects and calculate the reputation of an object within the graph. It utilizes <link>Rust</link> and <link>SurrealDB</link>, providing support for both <link>WebAssembly (WASM)</link> and <link>Python 3</link> through <link>PyO3</link>.
 
