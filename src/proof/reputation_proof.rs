@@ -55,14 +55,22 @@ impl <'a> ReputationProof<'a> {
         )
     }
 
+    fn current_amount(&self) -> i64
+    {
+        self.total_amount - self.outputs.iter().map(|out| out.total_amount).sum::<i64>()
+    }
+
+    fn current_proportion(&self) -> f64 {
+        self.current_amount() as f64 / self.total_amount as f64
+    }
+
 
     /**
     Don't pub needed if push function can be used.
      */
     pub fn can_be_spend(&self, amount: i64) -> bool
     {
-        self.outputs.iter().map(|out| out.total_amount).sum::<i64>()
-            + amount <= self.total_amount
+        self.current_amount() >= amount
     }
 
     /*          <!-- Difficult to use lifetimes here -->
@@ -108,19 +116,20 @@ impl <'a> ReputationProof<'a> {
     Get the proportion of reputation that have the out_index output over the total.
      */
     fn expended_proportion(&self, out_index: usize) -> f64 {
-        return self.outputs[out_index].total_amount as f64 / self.total_amount as f64;
+        self.outputs[out_index].total_amount as f64 / self.total_amount as f64
     }
 
     fn get_token_id(&self) -> Vec<u8> {
-        return self.token_id.clone()  // TODO Optimize memory if the childs don't store the token_id and get it from the root.
+        self.token_id.clone()  // TODO Optimize memory if the childs don't store the token_id and get it from the root.
     }
 
 
     /**
     Compute the reputation of a pointer searching on all the output tree.
 
-    This configuration don't allow to have assigned reputation and delegated reputation
-    at the same time.
+    This configuration assumes that the amount of reputation that a test assigns to its
+    pointer box is the amount that is not spent. In other words, if its outputs have
+    spent their total_amount, it is not assigning any amount to its pointer box.
 
     - If there is a pointer_box, it's a leaf.
     Recursive case: if there is pointer, uses the pointer_box's reputation.
@@ -130,22 +139,21 @@ impl <'a> ReputationProof<'a> {
 
      */
     pub fn compute(&self, pointer: PointerBox<'a>) -> f64 {
-        // TODO -> Add backtracking.
+        let mut total: f64 = 0.00;
         if self.pointer_box.is_some() {
-            if self.pointer_box == Some(pointer.clone()) {
-                1.00
-            } else {
-                self.pointer_box.as_ref().unwrap().compute(pointer.clone())
+            total += self.current_proportion() * {
+                if self.pointer_box == Some(pointer.clone()) { 1.00 }
+                else { self.pointer_box.as_ref().unwrap().compute(pointer.clone()) }
             }
-        } else {
-            self.outputs
-                .iter()
-                .enumerate()
-                .map(
-                    |(index, out)|
-                        self.expended_proportion(index) * (*out).compute(pointer.clone())
-                )
-                .sum()
-        }
+        };
+        total += self.outputs
+            .iter()
+            .enumerate()
+            .map(
+                |(index, out)|
+                    self.expended_proportion(index) * (*out).compute(pointer.clone())
+            )
+            .sum::<f64>();
+        total
     }
 }
