@@ -19,7 +19,7 @@ args = parser.parse_args()
 if args.build:
     # Execute the commands
     try:
-        os.system("pip3 uninstall reputation_graph -y")
+        os.system("pip3 uninstall sigma_reputation_graph -y")
         os.system("rm target/wheels/*")
     except:
         pass
@@ -29,7 +29,7 @@ if args.build:
     print("Build Ok!")
 
 if args.test:
-    from reputation_graph import spend, compute
+    from sigma_reputation_graph import spend, compute
 
     def simple_test():
         print("\n\nSimple test")

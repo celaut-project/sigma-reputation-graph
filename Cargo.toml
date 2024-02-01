@@ -1,5 +1,5 @@
 [package]
-name = "reputation-graph"
+name = "sigma-reputation-graph"
 version = "0.0.0"
 edition = "2021"
 
@@ -9,7 +9,7 @@ path = "tests/*.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
-name = "reputation_graph"
+name = "sigma_reputation_graph"
 crate-type = ["cdylib"]
 
 [dependencies]

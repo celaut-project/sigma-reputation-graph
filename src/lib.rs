@@ -81,7 +81,7 @@ fn compute<'p>(py: Python<'p>, root_id: &PyString, pointer: &PyString)
  */
 
 #[pymodule]
-fn reputation_graph(_py: Python, m: &PyModule) -> PyResult<()> {
+fn sigma_reputation_graph(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(submit, m)?)?;
     m.add_function(wrap_pyfunction!(spend, m)?)?;
     m.add_function(wrap_pyfunction!(compute, m)?)?;
