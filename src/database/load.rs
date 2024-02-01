@@ -2,19 +2,29 @@ use std::future::Future;
 use std::io::Error;
 use std::pin::Pin;
 use surrealdb::engine::local::{Db, File};
+use surrealdb::method::Query;
 use surrealdb::sql::{Thing};
 use surrealdb::Surreal;
 use crate::database::global::{*};
 use crate::proof::reputation_proof::ReputationProof;
 use crate::proof::pointer_box::PointerBox;
 
-fn recursive(proof_id: String, db: Surreal<Db>) -> Pin<Box<dyn Future<Output = Result<ReputationProof<'static>, Error>>>>
+fn recursive(proof_id: Option<String>, db: Surreal<Db>) -> Pin<Box<dyn Future<Output = Result<ReputationProof<'static>, Error>>>>
 {
     //  Why Box::pin? ->  https://doc.rust-lang.org/error_codes/E0733.html
     Box::pin(async move {
 
-        let response: Option<ReputationProofDB> = {
-            db.select((RESOURCE, proof_id.to_string())).await.expect(DB_ERROR_MSG)
+
+        let response: Option<ReputationProofDB> = match proof_id.clone() {
+            Some(__proof_id) => {
+                db.select((RESOURCE, __proof_id.to_string())).await.expect(DB_ERROR_MSG)
+            },
+            None => Some(
+                ReputationProofDB {
+                    pointer: None,
+                    amount: 0  // TODO query sum all total amounts form orphan proofs.
+                }
+            )
         };
 
         match response  {
@@ -28,15 +38,19 @@ fn recursive(proof_id: String, db: Surreal<Db>) -> Pin<Box<dyn Future<Output = R
                 );
 
                 // TODO Should be better ->  "SELECT ->leaf.out FROM reputation_proof:{}";
-                let query = format!("SELECT out FROM leaf WHERE in = reputation_proof:{}", proof_id.to_string());
+
+                let query = match proof_id {
+                    Some(__proof_id) => format!("SELECT out FROM leaf WHERE in = reputation_proof:{}", __proof_id.to_string()),
+                    None => format!("SELECT * AS out FROM reputation_proof WHERE id NOT IN leaf.out"),
+                };
                 let mut dependencies_response = db.query(query)
                     .await.expect(DB_ERROR_MSG);
 
                 let dependencies: Vec<Thing> = dependencies_response.take("out").expect(DB_ERROR_MSG);
                 for dependency in dependencies {
-                    let dependency_id = dependency.id.to_raw();
+                    let dependency_id: String = dependency.id.to_raw();
 
-                    match recursive(dependency_id, db.clone()).await {
+                    match recursive(Some(dependency_id), db.clone()).await {
                         Ok(r) => {
 
                             if (&proof).can_be_spend(r.total_amount) {
@@ -54,7 +68,7 @@ fn recursive(proof_id: String, db: Surreal<Db>) -> Pin<Box<dyn Future<Output = R
 }
 
 #[tokio::main]
-pub async fn load_from_db(proof_id: String) -> Result<ReputationProof<'static>, Error>
+pub async fn load_from_db(proof_id: Option<String>) -> Result<ReputationProof<'static>, Error>
 {
     let db = Surreal::new::<File>(ENDPOINT)
         .await.expect(DB_ERROR_MSG);

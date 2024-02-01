@@ -65,7 +65,7 @@ fn compute<'p>(py: Python<'p>, root_id: &PyString, pointer: &PyString)
     -> Result<&'p PyFloat, std::io::Error>
 {
     // Reads data from DB and load all the struct on memory.
-    match load_from_db(root_id.to_string())
+    match load_from_db(Some(root_id.to_string()))
     {
         Ok(proof) => {
             let pointer_box = PointerBox::String(pointer.to_string());
