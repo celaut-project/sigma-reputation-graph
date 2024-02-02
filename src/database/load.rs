@@ -1,7 +1,9 @@
-use std::future::Future;
+use std::future::{Future, IntoFuture};
 use std::io::Error;
 use std::pin::Pin;
+use serde::Deserialize;
 use surrealdb::engine::local::{Db, File};
+use surrealdb::engine::remote::ws::{Ws, Client};
 use surrealdb::method::Query;
 use surrealdb::sql::{Thing};
 use surrealdb::Surreal;
@@ -9,7 +11,9 @@ use crate::database::global::{*};
 use crate::proof::reputation_proof::ReputationProof;
 use crate::proof::pointer_box::PointerBox;
 
-fn recursive(proof_id: Option<String>, db: Surreal<Db>) -> Pin<Box<dyn Future<Output = Result<ReputationProof<'static>, Error>>>>
+
+
+fn recursive(proof_id: Option<String>, db: Surreal<Client>) -> Pin<Box<dyn Future<Output = Result<ReputationProof<'static>, Error>>>>
 {
     //  Why Box::pin? ->  https://doc.rust-lang.org/error_codes/E0733.html
     Box::pin(async move {
@@ -22,7 +26,13 @@ fn recursive(proof_id: Option<String>, db: Surreal<Db>) -> Pin<Box<dyn Future<Ou
             None => Some(
                 ReputationProofDB {
                     pointer: None,
-                    amount: 0  // TODO query sum all total amounts form orphan proofs.
+                    amount: {
+                        let r: Vec<i64> = 
+                            db.query("SELECT math::sum(amount) AS value FROM reputation_proof WHERE id NOTINSIDE <-leaf.out GROUP ALL")
+                                .await.expect(DB_ERROR_MSG)
+                                .take("value").expect(DB_ERROR_MSG);
+                        r[0]
+                    }
                 }
             )
         };
@@ -38,15 +48,16 @@ fn recursive(proof_id: Option<String>, db: Surreal<Db>) -> Pin<Box<dyn Future<Ou
                 );
 
                 // TODO Should be better ->  "SELECT ->leaf.out FROM reputation_proof:{}";
-
-                let query = match proof_id {
-                    Some(__proof_id) => format!("SELECT out FROM leaf WHERE in = reputation_proof:{}", __proof_id.to_string()),
-                    None => format!("SELECT * AS out FROM reputation_proof WHERE id NOT IN leaf.out"),
+                let query = match proof_id.clone() {
+                    Some(__proof_id) => format!("SELECT (out) AS id FROM leaf WHERE in = reputation_proof:{}", __proof_id.to_string()),
+                    None => format!("SELECT id FROM reputation_proof WHERE id NOTINSIDE <-leaf.out"),
                 };
+
                 let mut dependencies_response = db.query(query)
                     .await.expect(DB_ERROR_MSG);
 
-                let dependencies: Vec<Thing> = dependencies_response.take("out").expect(DB_ERROR_MSG);
+                let dependencies: Vec<Thing> = dependencies_response.take("id").expect(DB_ERROR_MSG);
+
                 for dependency in dependencies {
                     let dependency_id: String = dependency.id.to_raw();
 
@@ -70,8 +81,10 @@ fn recursive(proof_id: Option<String>, db: Surreal<Db>) -> Pin<Box<dyn Future<Ou
 #[tokio::main]
 pub async fn load_from_db(proof_id: Option<String>) -> Result<ReputationProof<'static>, Error>
 {
-    let db = Surreal::new::<File>(ENDPOINT)
-        .await.expect(DB_ERROR_MSG);
+    /*let db = Surreal::new::<File>(ENDPOINT)
+        .await.expect(DB_ERROR_MSG); */
+
+    let db = Surreal::new::<Ws>("localhost:8000").await.expect("");
 
     db.use_ns(NAMESPACE).use_db(DATABASE).await.expect(DB_ERROR_MSG);
 

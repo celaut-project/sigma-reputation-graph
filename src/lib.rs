@@ -37,7 +37,7 @@ fn submit(_proof_id: Vec<u8>)
 The pointer box parameter must be on-chain.
  */
 #[pyfunction]
-fn spend<'p>(py: Python<'p>, surreal_id: &PyString, amount: i64, pointer: Option<&PyString>)
+fn spend<'p>(py: Python<'p>, surreal_id: &PyString, amount: i64, pointer: Option<&PyString>)   // TODO surreal_id can be None
    -> Result<&'p PyString, std::io::Error>
 {
     match store_on_db(
@@ -61,11 +61,15 @@ Params
 - pointer to calculate
  */
 #[pyfunction]
-fn compute<'p>(py: Python<'p>, root_id: &PyString, pointer: &PyString)
+#[pyo3(signature = (root_id, pointer))]
+fn compute<'p>(py: Python<'p>, root_id: Option<&PyString>, pointer: &PyString)
     -> Result<&'p PyFloat, std::io::Error>
 {
     // Reads data from DB and load all the struct on memory.
-    match load_from_db(Some(root_id.to_string()))
+    match load_from_db(match root_id {
+            Some(id) => Some(id.to_string()),
+            None => None,
+        })
     {
         Ok(proof) => {
             let pointer_box = PointerBox::String(pointer.to_string());

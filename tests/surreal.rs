@@ -1,7 +1,7 @@
 
 mod surreal {
     use serde::{Deserialize, Serialize};
-    use surrealdb::engine::local::File;
+    use surrealdb::engine::remote::ws::Ws;
     use surrealdb::sql::Thing;
     use surrealdb::Surreal;
     use tokio::test;
@@ -33,8 +33,9 @@ mod surreal {
     #[test]
     async fn t() -> surrealdb::Result<()> {
         // Create database connection
-        let db = Surreal::new::<File>("reputation.db").await?;
-
+        //let db = Surreal::new::<File>("reputation.db").await?;
+        let db = Surreal::new::<Ws>("localhost:8000").await.expect("");
+        
         // Select a specific namespace / database
         db.use_ns("test").use_db("test").await?;
 
