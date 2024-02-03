@@ -1,10 +1,7 @@
-use std::future::{Future, IntoFuture};
+use std::future::Future;
 use std::io::Error;
 use std::pin::Pin;
-use serde::Deserialize;
 use surrealdb::engine::local::{Db, File};
-use surrealdb::engine::remote::ws::{Ws, Client};
-use surrealdb::method::Query;
 use surrealdb::sql::{Thing};
 use surrealdb::Surreal;
 use crate::database::global::{*};
@@ -13,7 +10,7 @@ use crate::proof::pointer_box::PointerBox;
 
 
 
-fn recursive(proof_id: Option<String>, db: Surreal<Client>) -> Pin<Box<dyn Future<Output = Result<ReputationProof<'static>, Error>>>>
+fn recursive(proof_id: Option<String>, db: Surreal<Db>) -> Pin<Box<dyn Future<Output = Result<ReputationProof<'static>, Error>>>>
 {
     //  Why Box::pin? ->  https://doc.rust-lang.org/error_codes/E0733.html
     Box::pin(async move {
@@ -84,7 +81,7 @@ pub async fn load_from_db(proof_id: Option<String>) -> Result<ReputationProof<'s
     /*let db = Surreal::new::<File>(ENDPOINT)
         .await.expect(DB_ERROR_MSG); */
 
-    let db = Surreal::new::<Ws>("localhost:8000").await.expect("");
+    let db = Surreal::new::<File>(ENDPOINT).await.expect("");
 
     db.use_ns(NAMESPACE).use_db(DATABASE).await.expect(DB_ERROR_MSG);
 
