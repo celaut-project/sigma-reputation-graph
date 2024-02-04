@@ -28,7 +28,7 @@ fn recursive(proof_id: Option<String>, db: Surreal<Db>) -> Pin<Box<dyn Future<Ou
                             db.query("SELECT math::sum(amount) AS value FROM reputation_proof WHERE id NOTINSIDE <-leaf.out GROUP ALL")
                                 .await.expect(DB_ERROR_MSG)
                                 .take("value").expect(DB_ERROR_MSG);
-                        r[0]
+                        if let Some(value) = r.get(0) { *value } else { 0 }
                     }
                 }
             )
