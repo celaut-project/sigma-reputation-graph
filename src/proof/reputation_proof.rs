@@ -116,7 +116,10 @@ impl <'a> ReputationProof<'a> {
     Get the proportion of reputation that have the out_index output over the total.
      */
     fn expended_proportion(&self, out_index: usize) -> f64 {
-        self.outputs[out_index].total_amount as f64 / self.total_amount as f64
+        if self.total_amount as f64 == 0.00 { 0.00 } 
+        else {
+            self.outputs[out_index].total_amount as f64 / self.total_amount as f64
+        }
     }
 
     fn get_token_id(&self) -> Vec<u8> {
