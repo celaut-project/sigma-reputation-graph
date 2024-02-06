@@ -36,17 +36,17 @@ if args.test:
         gh_pointer = "github.com"
         sdb_pointer = "surrealdb.com"
         rl_pointer = "rust-lang.org"
-        v = spend("", 100)
-        v1 = spend(v, 50)
-        v12 = spend(v1, 15, sdb_pointer)
-        v13 = spend(v1, 20)
-        v1234 = spend(v13, 10, gh_pointer)
-        v2 = spend(v, 30)
-        v23 = spend(v2, 8, rl_pointer)
+        v = spend("", 100, None, None)
+        v1 = spend(v, 50, None, None)
+        v12 = spend(v1, 15, sdb_pointer, None)
+        v13 = spend(v1, 20, None, None)
+        v1234 = spend(v13, 10, gh_pointer, None)
+        v2 = spend(v, 30, None, None)
+        v23 = spend(v2, 8, rl_pointer, None)
 
-        assert 0.1 == compute(v, gh_pointer)
-        assert 0.15 == compute(v, sdb_pointer)
-        assert 0.08 == compute(v, rl_pointer)
+        assert 0.1 == compute(v, gh_pointer, None)
+        assert 0.15 == compute(v, sdb_pointer, None)
+        assert 0.08 == compute(v, rl_pointer, None)
 
         print("Works well!")
 
@@ -71,7 +71,7 @@ if args.test:
             global leaf_number
             _pointer = random_pointer() if randint(0, 1) else None
             _pointers = [_pointer] if _pointer else []
-            _v: str = spend(parent, amount, _pointer)
+            _v: str = spend(parent, amount, _pointer, None)
             proof_number += 1
             if depth >= MAX_DEPTH or amount <= MIN_AMOUNT:
                 leaf_number += 1  # <- leaf
@@ -89,7 +89,7 @@ if args.test:
         times = []
         for pointer in pointers:
             start = time()
-            r = compute(v, pointer)
+            r = compute(v, pointer, None)
             end = time()
             time_lapse = end - start
             times.append(time_lapse)

@@ -2,6 +2,7 @@ use database::load::load_from_db;
 use pyo3::prelude::*;
 use pyo3::types::{PyString, PyFloat};
 use crate::database::spend::store_on_db;
+use crate::database::generate::generate;
 use crate::proof::pointer_box::PointerBox;
 
 pub mod proof;
@@ -37,7 +38,8 @@ fn submit(_proof_id: Vec<u8>)
 The pointer box parameter must be on-chain.
  */
 #[pyfunction]
-fn spend<'p>(py: Python<'p>, surreal_id: &PyString, amount: i64, pointer: Option<&PyString>)   // TODO surreal_id can be None
+#[pyo3(signature = (surreal_id, amount, pointer, database_file))]
+fn spend<'p>(py: Python<'p>, surreal_id: &PyString, amount: i64, pointer: Option<&PyString>, database_file: Option<&PyString>)   // TODO surreal_id can be None
    -> Result<&'p PyString, std::io::Error>
 {
     match store_on_db(
@@ -47,7 +49,11 @@ fn spend<'p>(py: Python<'p>, surreal_id: &PyString, amount: i64, pointer: Option
         match pointer {
             Some(p) => Some(p.to_string()),
             None => None
-        }
+        },
+        generate(match database_file {
+            Some(s) => Some(s.to_string()),
+            None => None
+        })
     ) {
         Ok(id) => Ok(PyString::new(py, &id)),
         Err(error) => Err(error)
@@ -61,15 +67,21 @@ Params
 - pointer to calculate
  */
 #[pyfunction]
-#[pyo3(signature = (root_id, pointer))]
-fn compute<'p>(py: Python<'p>, root_id: Option<&PyString>, pointer: &PyString)
+#[pyo3(signature = (root_id, pointer, database_file))]
+fn compute<'p>(py: Python<'p>, root_id: Option<&PyString>, pointer: &PyString, database_file: Option<&PyString>)
     -> Result<&'p PyFloat, std::io::Error>
 {
     // Reads data from DB and load all the struct on memory.
-    match load_from_db(match root_id {
+    match load_from_db(
+        match root_id {
             Some(id) => Some(id.to_string()),
             None => None,
+        },
+        generate(match database_file {
+            Some(s) => Some(s.to_string()),
+            None => None
         })
+    )
     {
         Ok(proof) => {
             let pointer_box = PointerBox::String(pointer.to_string());

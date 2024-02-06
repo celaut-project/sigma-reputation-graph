@@ -1,9 +1,10 @@
 use std::future::Future;
 use std::io::Error;
 use std::pin::Pin;
-use surrealdb::engine::local::{Db, File};
+use surrealdb::engine::local::Db;
 use surrealdb::sql::{Thing};
 use surrealdb::Surreal;
+use crate::database::generate::DatabaseAsync;
 use crate::database::global::{*};
 use crate::proof::reputation_proof::ReputationProof;
 use crate::proof::pointer_box::PointerBox;
@@ -76,17 +77,15 @@ fn recursive(proof_id: Option<String>, db: Surreal<Db>) -> Pin<Box<dyn Future<Ou
 }
 
 #[tokio::main]
-pub async fn load_from_db(proof_id: Option<String>) -> Result<ReputationProof<'static>, Error>
+pub async fn load_from_db(proof_id: Option<String>, database: DatabaseAsync) -> Result<ReputationProof<'static>, Error>
 {
-    /*let db = Surreal::new::<File>(ENDPOINT)
-        .await.expect(DB_ERROR_MSG); */
-
-    let db = Surreal::new::<File>(ENDPOINT).await.expect("");
-
-    db.use_ns(NAMESPACE).use_db(DATABASE).await.expect(DB_ERROR_MSG);
-
-    match recursive(proof_id, db).await {
-        Ok(r) => Ok(r),
+    match database.await {
+        Ok(db) => {
+            match recursive(proof_id, db).await {
+                Ok(r) => Ok(r),
+                Err(err) => Err(err)
+            }
+        },
         Err(err) => Err(err)
     }
 }
