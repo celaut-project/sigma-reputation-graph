@@ -26,3 +26,9 @@ The project relies on the following components:
 
 ## Getting Started
 To get started with the **<link>reputation-graph</link>** project, refer to the documentation and examples provided in the respective environment (<link>WASM</link> or <link>Python 3</link>).
+
+
+## Install
+
+### For Python3.11 - Linux - x86_64
+`pip3 install https://github.com/celaut-project/sigma-reputation-graph/raw/master/target/wheels/sigma_reputation_graph-0.0.0-cp311-cp311-manylinux_2_35_x86_64.whl`
