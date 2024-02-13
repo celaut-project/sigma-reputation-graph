@@ -13,6 +13,13 @@ pub(crate) struct ReputationProofDB {
     pub(crate) amount: i64
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub(crate) struct ReputationProofDBWithId {
+    pub(crate) id: String,
+    pub(crate) pointer: Option<String>,
+    pub(crate) amount: i64
+}
+
 #[derive(Debug, Deserialize)]
 pub(crate) struct Record {
     #[allow(dead_code)]
