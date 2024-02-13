@@ -1,5 +1,5 @@
 /target/*
-!/target/wheels/*
+!/target/wheels
 /Cargo.lock
 .idea
 reputation.db
