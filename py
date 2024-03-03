@@ -22,7 +22,7 @@ if args.build:
         os.system("rm -rf target/wheels/*")
     except:
         pass
-    os.system("maturin build --strip")
+    os.system("maturin build --strip --release --features pyo3-bindings")
     os.system("pip3 install target/wheels/*")
 
     print("Build Ok!")

@@ -1,9 +1,14 @@
 use database::load::load_from_db;
-use pyo3::prelude::*;
-use pyo3::types::{PyString, PyFloat};
 use crate::database::spend::store_on_db;
 use crate::database::generate::generate;
 use crate::proof::pointer_box::PointerBox;
+
+#[cfg(feature = "pyo3-bindings")]
+use pyo3::prelude::*;
+use pyo3::types::{PyString, PyFloat};
+
+#[cfg(feature = "wasm-bindings")]
+use wasm_bindgen::prelude::*;
 
 pub mod proof;
 pub mod database;
@@ -20,7 +25,7 @@ https://pyo3.rs/main/class.html?highlight=lifetime#no-lifetime-parameters
 Instead, each call is a process that will use surrealDB on disk (using async for communication
 with the DB, but in isolation for each call).
 */
-
+#[cfg(feature = "pyo3-bindings")]
 #[pyfunction]
 fn submit(_proof_id: Vec<u8>)
 {
@@ -37,6 +42,7 @@ fn submit(_proof_id: Vec<u8>)
 /**
 The pointer box parameter must be on-chain.
  */
+#[cfg(feature = "pyo3-bindings")]
 #[pyfunction]
 #[pyo3(signature = (surreal_id, amount, pointer, database_file))]
 fn spend<'p>(py: Python<'p>, surreal_id: &PyString, amount: i64, pointer: Option<&PyString>, database_file: Option<&PyString>)   // TODO surreal_id can be None
@@ -66,6 +72,7 @@ Params
 - root_id surreal_id of the root proof.
 - pointer to calculate
  */
+#[cfg(feature = "pyo3-bindings")]
 #[pyfunction]
 #[pyo3(signature = (root_id, pointer, database_file))]
 fn compute<'p>(py: Python<'p>, root_id: Option<&PyString>, pointer: &PyString, database_file: Option<&PyString>)
@@ -95,11 +102,17 @@ fn compute<'p>(py: Python<'p>, root_id: Option<&PyString>, pointer: &PyString, d
 /*
    TODO If the desired DB mode is Mem, all the methods should run using Tokio. If not, that's not important.
  */
-
+#[cfg(feature = "pyo3-bindings")]
 #[pymodule]
 fn sigma_reputation_graph(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(submit, m)?)?;
     m.add_function(wrap_pyfunction!(spend, m)?)?;
     m.add_function(wrap_pyfunction!(compute, m)?)?;
     Ok(())
+}
+
+#[cfg(feature = "wasm-bindings")]
+#[wasm_bindgen]
+pub fn hello_browser() -> String {
+    "Hello from Rust, Browser!".into()
 }
