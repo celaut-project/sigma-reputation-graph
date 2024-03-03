@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 import argparse
 import os
 import secrets
@@ -20,10 +19,10 @@ if args.build:
     # Execute the commands
     try:
         os.system("pip3 uninstall sigma_reputation_graph -y")
-        os.system("rm target/wheels/*")
+        os.system("rm -rf target/wheels/*")
     except:
         pass
-    os.system("/usr/bin/python3 -m maturin build")
+    os.system("maturin build --strip")
     os.system("pip3 install target/wheels/*")
 
     print("Build Ok!")
@@ -101,9 +100,8 @@ if args.test:
               f"\n          avg time lapse -> {mean(times)}, "
               f"\n          SCORE -> {proof_number/mean(times)}.")
 
-
-    performance_test()
     simple_test()
+    performance_test()
     print("\n\nTests Ok!")
 
 print("\nEnd.")

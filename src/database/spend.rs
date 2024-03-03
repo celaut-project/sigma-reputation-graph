@@ -43,7 +43,7 @@ pub async fn store_on_db(previous_proof_id: Option<String>, amount: i64, pointer
 
                     let result: Vec<ReputationProofDBWithId> = db
                             .query(
-                                format!("SELECT * FROM reputation_proof WHERE pointer={}", 
+                                format!("SELECT * FROM reputation_proof WHERE pointer='{}'", 
                                 pointer.clone().unwrap_or(String::from("")))
                             )
                             .await.expect(DB_ERROR_MSG)
