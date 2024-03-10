@@ -1,42 +1,38 @@
 use std::fmt::{Debug, Formatter};
-use crate::proof::pointer_box::{PointerBox};
+use crate::proof::pointer_box::PointerBox;
+
+use super::pointer_box::Pointer;
 
 #[derive(Clone)]
 pub struct ReputationProof<'a> {
-    box_id: Vec<u8>,
     token_id: Vec<u8>,
     pub(crate) total_amount: i64,
-    pub(crate) outputs: Vec<ReputationProof<'a>>,
-    pointer_box: Option<PointerBox<'a>>,
+    pub(crate) outputs: Vec<PointerBox<'a>>,
 }
 
 impl<'a> PartialEq for ReputationProof<'a> {
     fn eq(&self, other: &Self) -> bool {
-        self.box_id == other.box_id
+        self.token_id == other.token_id
     }
 }
 
 impl<'a> Debug for ReputationProof<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "ReputationProof box id: {:?}, with amount {}. \n  out -> {:?}.\n",
-               self.box_id, self.total_amount, self.outputs)
+               self.token_id, self.total_amount, self.outputs)
     }
 }
 
 impl <'a> ReputationProof<'a> {
     fn new(
-        box_id: Vec<u8>,
         token_id: Vec<u8>,
         total_amount: i64,
-        outputs: Vec<ReputationProof<'a>>,
-        pointer_box: Option<PointerBox<'a>>,
+        outputs: Vec<PointerBox<'a>>,
     ) -> ReputationProof<'a> {
         ReputationProof {
-            box_id,
             token_id,
             total_amount,
-            outputs,
-            pointer_box,
+            outputs
         }
     }
 
@@ -44,20 +40,19 @@ impl <'a> ReputationProof<'a> {
     Creates a new reputation proof from scratch.
      */
     pub fn create(
-        box_id: Vec<u8>,
-        total_amount: i64,
-        pointer_box: Option<PointerBox<'a>>,
+        token_id: Vec<u8>,
+        total_amount: i64
     ) -> ReputationProof<'a> {
         return ReputationProof::new(
-            box_id, vec![],
-            total_amount,  vec![],
-            pointer_box
+            token_id,
+            total_amount,
+            vec![],
         )
     }
 
     fn current_amount(&self) -> i64
     {
-        self.total_amount - self.outputs.iter().map(|out| out.total_amount).sum::<i64>()
+        self.total_amount - self.outputs.iter().map(|out| out.amount).sum::<i64>()
     }
 
     fn current_proportion(&self) -> f64 {
@@ -100,9 +95,9 @@ impl <'a> ReputationProof<'a> {
         match self.can_be_spend(amount) {
             true => Ok(
                 ReputationProof::new(
-                    vec![], self.get_token_id(),
-                    amount, vec![],
-                    pointer_box
+                    vec![],
+                    amount, 
+                    vec![]
                 )
             ),
             false => Err(std::io::Error::new(
@@ -118,45 +113,26 @@ impl <'a> ReputationProof<'a> {
     fn expended_proportion(&self, out_index: usize) -> f64 {
         if self.total_amount as f64 == 0.00 { 0.00 } 
         else {
-            self.outputs[out_index].total_amount as f64 / self.total_amount as f64
+            self.outputs[out_index].amount as f64 / self.total_amount as f64
         }
     }
 
     fn get_token_id(&self) -> Vec<u8> {
-        self.token_id.clone()  // TODO Optimize memory if the childs don't store the token_id and get it from the root.
+        self.token_id.clone()
     }
 
 
     /**
-    Compute the reputation of a pointer searching on all the output tree.
-
-    This configuration assumes that the amount of reputation that a test assigns to its
-    pointer box is the amount that is not spent. In other words, if its outputs have
-    spent their total_amount, it is not assigning any amount to its pointer box.
-
-    - If there is a pointer_box, it's a leaf.
-    Recursive case: if there is pointer, uses the pointer_box's reputation.
-
-    - If there are any pointer box, it's a node.
-    Base case: if there is not pointer, computes the reputation directly.
-
+    Compute the reputation of a pointer searching on the proof boxes.
      */
-    pub fn compute(&self, pointer: PointerBox<'a>) -> f64 {
-        let mut total: f64 = 0.00;
-        if self.pointer_box.is_some() {
-            total += self.current_proportion() * {
-                if self.pointer_box == Some(pointer.clone()) { 1.00 }
-                else { self.pointer_box.as_ref().unwrap().compute(pointer.clone()) }
-            }
-        };
-        total += self.outputs
+    pub fn compute(&self, pointer: Pointer<'a>) -> f64 {
+        self.outputs
             .iter()
             .enumerate()
             .map(
                 |(index, out)|
                     self.expended_proportion(index) * (*out).compute(pointer.clone())
             )
-            .sum::<f64>();
-        total
+            .sum::<f64>()
     }
 }

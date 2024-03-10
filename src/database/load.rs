@@ -2,12 +2,12 @@ use std::future::Future;
 use std::io::Error;
 use std::pin::Pin;
 use surrealdb::engine::local::Db;
-use surrealdb::sql::{Thing};
+use surrealdb::sql::Thing;
 use surrealdb::Surreal;
 use crate::database::generate::DatabaseAsync;
 use crate::database::global::{*};
 use crate::proof::reputation_proof::ReputationProof;
-use crate::proof::pointer_box::PointerBox;
+use crate::proof::pointer_box::{Pointer, PointerBox};
 
 
 
@@ -17,12 +17,12 @@ fn recursive(proof_id: Option<String>, db: Surreal<Db>) -> Pin<Box<dyn Future<Ou
     Box::pin(async move {
 
 
-        let response: Option<ReputationProofDB> = match proof_id.clone() {
+        let response: Option<RPBoxDB> = match proof_id.clone() {
             Some(__proof_id) => {
                 db.select((RESOURCE, __proof_id.to_string())).await.expect(DB_ERROR_MSG)
             },
             None => Some(
-                ReputationProofDB {
+                RPBoxDB {
                     pointer: None,
                     amount: {
                         let r: Vec<i64> = 
@@ -37,13 +37,11 @@ fn recursive(proof_id: Option<String>, db: Surreal<Db>) -> Pin<Box<dyn Future<Ou
 
         match response  {
             Some(r) => {
-                let pointer_box = r.pointer.map_or_else(
+                let pointer = r.pointer.map_or_else(
                     || None,
-                    |s| Some(PointerBox::String(s)) // TODO add proof enum case.
+                    |s| Some(Pointer::String(s)) // TODO add proof enum case.
                 );
-                let mut proof = ReputationProof::create(Vec::new(),
-                                                    r.amount, pointer_box
-                );
+                let mut proof = ReputationProof::create(Vec::new(),r.amount);
 
                 // TODO Should be better ->  "SELECT ->leaf.out FROM reputation_proof:{}";
                 let query = match proof_id.clone() {
@@ -56,14 +54,15 @@ fn recursive(proof_id: Option<String>, db: Surreal<Db>) -> Pin<Box<dyn Future<Ou
 
                 let dependencies: Vec<Thing> = dependencies_response.take("id").expect(DB_ERROR_MSG);
 
+                let pointer_is_some: bool = pointer.is_some();
                 for dependency in dependencies {
                     let dependency_id: String = dependency.id.to_raw();
 
                     match recursive(Some(dependency_id), db.clone()).await {
                         Ok(r) => {
-
-                            if (&proof).can_be_spend(r.total_amount) {
-                                proof.outputs.push(r);
+                            if pointer_is_some && (&proof).can_be_spend(r.total_amount) {
+                                let pointer_box = PointerBox::new(vec![], r.total_amount, pointer.clone().unwrap());
+                                proof.outputs.push(pointer_box);
                             }
                         },
                         Err(err) => eprintln!("{:?}", err)

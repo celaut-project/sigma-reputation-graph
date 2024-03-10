@@ -23,12 +23,12 @@ fn get_proof_db_id(id: String, db: Surreal<Db>) -> Pin<Box<dyn Future<Output = R
 
 
 #[tokio::main]
-pub async fn store_on_db(previous_proof_id: Option<String>, amount: i64, pointer: Option<String>, database: DatabaseAsync)
+pub async fn store_on_db(reputation_proof_id: Option<String>, amount: i64, pointer: Option<String>, database: DatabaseAsync)
     -> Result<String, Error>
 {
     match database.await {
         Ok(db) => {
-            let id_result: Result<Option<String>, Error> = match previous_proof_id {
+            let parent_id_result: Result<Option<String>, Error> = match reputation_proof_id {
                 None => Ok(None),
                 Some(id) => {
                     match get_proof_db_id(id, db.clone()).await {
@@ -38,13 +38,16 @@ pub async fn store_on_db(previous_proof_id: Option<String>, amount: i64, pointer
                 }
             };
         
-            match id_result {
+            match parent_id_result {
                 Ok(parent_id) => {
 
-                    let result: Vec<ReputationProofDBWithId> = db
+                    let result: Vec<RPBoxDBWithId> = db
                             .query(
-                                format!("SELECT * FROM reputation_proof WHERE pointer='{}'", 
-                                pointer.clone().unwrap_or(String::from("")))
+                                format!(
+                                    "SELECT * FROM {:?} WHERE pointer='{}'",
+                                    RESOURCE, 
+                                    pointer.clone().unwrap_or(String::from(""))
+                                )
                             )
                             .await.expect(DB_ERROR_MSG)
                             .take(1).expect(DB_ERROR_MSG);
@@ -54,20 +57,19 @@ pub async fn store_on_db(previous_proof_id: Option<String>, amount: i64, pointer
                         [_s] => {
 
                             let _updated: Option<Thing> = db
-                            .update((RESOURCE, _s.id.as_str()))
-                            .content(ReputationProofDB {
-                                amount: amount + _s.amount,
-                                pointer: pointer
-                            })
-                            .await.expect(DB_ERROR_MSG);
+                                .update((RESOURCE, _s.id.as_str()))
+                                .content(RPBoxDB {
+                                    amount: amount + _s.amount,
+                                    pointer: pointer // TODO it's the same than before.
+                                })
+                                .await.expect(DB_ERROR_MSG);
 
                             _s.id.clone()
                         },
                         _ => {
-                            // Create a new person with a random id
                             let created: Vec<Record> = db
                                 .create(RESOURCE)
-                                .content(ReputationProofDB {
+                                .content(RPBoxDB {
                                     pointer,
                                     amount  // TODO could check that amount <= proof->amount
                                 })
@@ -75,6 +77,7 @@ pub async fn store_on_db(previous_proof_id: Option<String>, amount: i64, pointer
                 
                             let raw_id = created.first().unwrap().id.to_string();
                 
+                            // TODO eliminate parent_id from spend(), not needed.  leafs are for pointers to reputation proofs.
                             match parent_id {
                                 None => {}
                                 Some(parent_id) => {

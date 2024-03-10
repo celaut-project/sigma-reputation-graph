@@ -8,13 +8,13 @@ pub(crate) const ENDPOINT: &str = "reputation.db";
 pub(crate) const RESOURCE: &str = "reputation_proof";
 
 #[derive(Debug, Serialize, Deserialize)]
-pub(crate) struct ReputationProofDB {
+pub(crate) struct RPBoxDB {
     pub(crate) pointer: Option<String>,
     pub(crate) amount: i64
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub(crate) struct ReputationProofDBWithId {
+pub(crate) struct RPBoxDBWithId {
     pub(crate) id: String,
     pub(crate) pointer: Option<String>,
     pub(crate) amount: i64

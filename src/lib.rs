@@ -1,7 +1,7 @@
 use database::load::load_from_db;
 use crate::database::spend::store_on_db;
 use crate::database::generate::generate;
-use crate::proof::pointer_box::PointerBox;
+use proof::pointer_box::Pointer;
 
 #[cfg(feature = "pyo3-bindings")]
 use pyo3::prelude::*;
@@ -91,8 +91,7 @@ fn compute<'p>(py: Python<'p>, root_id: Option<&PyString>, pointer: &PyString, d
     )
     {
         Ok(proof) => {
-            let pointer_box = PointerBox::String(pointer.to_string());
-            let result = proof.compute(pointer_box);
+            let result = proof.compute(Pointer::String(pointer.to_string()));
             Ok(PyFloat::new(py, result))
         },
         Err(error) => Err(error)
