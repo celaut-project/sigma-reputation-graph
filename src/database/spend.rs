@@ -54,7 +54,7 @@ pub async fn store_on_db(reputation_proof_id: Option<String>, amount: i64, point
 
                     let raw_id: String = match &result[..] {
 
-                        [_s] => {
+                        [_s] => {  // Match if the query result has exactly one element.
 
                             let _updated: Option<Thing> = db
                                 .update((RESOURCE, _s.id.as_str()))
