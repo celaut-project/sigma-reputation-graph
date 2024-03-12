@@ -9,6 +9,7 @@ pub(crate) const RESOURCE: &str = "reputation_proof";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct RPBoxDB {
+    pub(crate) proof_id: Option<String>,
     pub(crate) pointer: Option<String>,
     pub(crate) amount: i64
 }
@@ -16,6 +17,7 @@ pub(crate) struct RPBoxDB {
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct RPBoxDBWithId {
     pub(crate) id: String,
+    pub(crate) proof_id: Option<String>,
     pub(crate) pointer: Option<String>,
     pub(crate) amount: i64
 }

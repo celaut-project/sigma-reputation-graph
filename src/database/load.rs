@@ -2,8 +2,8 @@ use std::future::Future;
 use std::io::Error;
 use std::pin::Pin;
 use surrealdb::engine::local::Db;
-use surrealdb::sql::Thing;
 use surrealdb::Surreal;
+
 use crate::database::generate::DatabaseAsync;
 use crate::database::global::{*};
 use crate::proof::reputation_proof::ReputationProof;
@@ -11,72 +11,64 @@ use crate::proof::pointer_box::{Pointer, PointerBox};
 
 
 
-fn recursive(proof_id: Option<String>, db: Surreal<Db>) -> Pin<Box<dyn Future<Output = Result<ReputationProof<'static>, Error>>>>
+fn recursive(proof_id: Option<String>, db: Surreal<Db>) -> Pin<Box<dyn Future<Output = Result<ReputationProof, Error>>>>
 {
     //  Why Box::pin? ->  https://doc.rust-lang.org/error_codes/E0733.html
     Box::pin(async move {
 
 
-        let response: Option<RPBoxDB> = match proof_id.clone() {
+        let proof_boxes: Vec<RPBoxDB> = match proof_id.clone() {
             Some(__proof_id) => {
-                db.select((RESOURCE, __proof_id.to_string())).await.expect(DB_ERROR_MSG)
+                db.query("SELECT * FROM $resource WHERE proof_id=$proof_id AND pointer!= NULL")
+                    .bind(("resource", RESOURCE))
+                    .bind(("proof_id", __proof_id.to_string()))
+                    .await.expect(DB_ERROR_MSG).take(0).unwrap()
             },
-            None => Some(
-                RPBoxDB {
-                    pointer: None,
-                    amount: {
-                        let r: Vec<i64> = 
-                            db.query("SELECT math::sum(amount) AS value FROM reputation_proof WHERE id NOTINSIDE <-leaf.out GROUP ALL")
-                                .await.expect(DB_ERROR_MSG)
-                                .take("value").expect(DB_ERROR_MSG);
-                        if let Some(value) = r.get(0) { *value } else { 0 }
-                    }
-                }
-            )
+            None => vec!()
         };
 
-        match response  {
-            Some(r) => {
-                let pointer = r.pointer.map_or_else(
-                    || None,
-                    |s| Some(Pointer::String(s)) // TODO add proof enum case.
-                );
-                let mut proof = ReputationProof::create(Vec::new(),r.amount);
-
-                // TODO Should be better ->  "SELECT ->leaf.out FROM reputation_proof:{}";
-                let query = match proof_id.clone() {
-                    Some(__proof_id) => format!("SELECT (out) AS id FROM leaf WHERE in = reputation_proof:{}", __proof_id.to_string()),
-                    None => format!("SELECT id FROM reputation_proof WHERE id NOTINSIDE <-leaf.out"),
-                };
-
-                let mut dependencies_response = db.query(query)
-                    .await.expect(DB_ERROR_MSG);
-
-                let dependencies: Vec<Thing> = dependencies_response.take("id").expect(DB_ERROR_MSG);
-
-                let pointer_is_some: bool = pointer.is_some();
-                for dependency in dependencies {
-                    let dependency_id: String = dependency.id.to_raw();
-
-                    match recursive(Some(dependency_id), db.clone()).await {
-                        Ok(r) => {
-                            if pointer_is_some && (&proof).can_be_spend(r.total_amount) {
-                                let pointer_box = PointerBox::new(vec![], r.total_amount, pointer.clone().unwrap());
-                                proof.outputs.push(pointer_box);
-                            }
-                        },
-                        Err(err) => eprintln!("{:?}", err)
-                    }
+        let mut proof = 
+            ReputationProof::create(
+                Vec::new(),
+                {
+                    let r: Vec<i64> =
+                                db.query("SELECT math::sum(amount) AS value FROM reputation_proof WHERE proof_id=$proof_id GROUP ALL")
+                                    .bind(("proof_id", proof_id.unwrap_or(String::from("")).to_string()))
+                                    .await.expect(DB_ERROR_MSG)
+                                    .take("value").expect(DB_ERROR_MSG);
+                            if let Some(value) = r.get(0) { *value } else { 0 }
                 }
-                Ok(proof)
-            },
-            None => todo!(),
+            );
+
+        for dependency in proof_boxes {
+            let dependency_id: Option<String> = dependency.pointer;
+
+            if dependency_id.is_none() {
+                eprintln!("{:?}", "Dependency can't be null at this point.")
+            }
+
+            if (&proof).can_be_spend(dependency.amount) {
+                proof.outputs.push(
+                    PointerBox::new(
+                        vec![], 
+                        dependency.amount, 
+                        match recursive(dependency_id, db.clone()).await {
+                            Ok(_proof_pointed) => Pointer::ReputationProof(_proof_pointed),
+                            Err(err) => {
+                                eprint!("{}", err);
+                                Pointer::String(String::from(""))
+                            }
+                        }
+                    )
+                );
+            }
         }
+        Ok(proof)
     })
 }
 
 #[tokio::main]
-pub async fn load_from_db(proof_id: Option<String>, database: DatabaseAsync) -> Result<ReputationProof<'static>, Error>
+pub async fn load_from_db(proof_id: Option<String>, database: DatabaseAsync) -> Result<ReputationProof, Error>
 {
     match database.await {
         Ok(db) => {

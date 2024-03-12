@@ -4,31 +4,31 @@ use crate::proof::pointer_box::PointerBox;
 use super::pointer_box::Pointer;
 
 #[derive(Clone)]
-pub struct ReputationProof<'a> {
+pub struct ReputationProof {
     token_id: Vec<u8>,
     pub(crate) total_amount: i64,
-    pub(crate) outputs: Vec<PointerBox<'a>>,
+    pub(crate) outputs: Vec<PointerBox>,
 }
 
-impl<'a> PartialEq for ReputationProof<'a> {
+impl<'a> PartialEq for ReputationProof {
     fn eq(&self, other: &Self) -> bool {
         self.token_id == other.token_id
     }
 }
 
-impl<'a> Debug for ReputationProof<'a> {
+impl<'a> Debug for ReputationProof {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "ReputationProof box id: {:?}, with amount {}. \n  out -> {:?}.\n",
                self.token_id, self.total_amount, self.outputs)
     }
 }
 
-impl <'a> ReputationProof<'a> {
+impl <'a> ReputationProof {
     fn new(
         token_id: Vec<u8>,
         total_amount: i64,
-        outputs: Vec<PointerBox<'a>>,
-    ) -> ReputationProof<'a> {
+        outputs: Vec<PointerBox>,
+    ) -> ReputationProof {
         ReputationProof {
             token_id,
             total_amount,
@@ -42,7 +42,7 @@ impl <'a> ReputationProof<'a> {
     pub fn create(
         token_id: Vec<u8>,
         total_amount: i64
-    ) -> ReputationProof<'a> {
+    ) -> ReputationProof {
         return ReputationProof::new(
             token_id,
             total_amount,
@@ -90,8 +90,8 @@ impl <'a> ReputationProof<'a> {
      */
     pub fn spend(&self,
                  amount: i64,
-                 pointer_box: Option<PointerBox<'a>>,
-    ) -> Result<ReputationProof<'a>, std::io::Error> {
+                 pointer_box: Option<PointerBox>,
+    ) -> Result<ReputationProof, std::io::Error> {
         match self.can_be_spend(amount) {
             true => Ok(
                 ReputationProof::new(
@@ -125,7 +125,7 @@ impl <'a> ReputationProof<'a> {
     /**
     Compute the reputation of a pointer searching on the proof boxes.
      */
-    pub fn compute(&self, pointer: Pointer<'a>) -> f64 {
+    pub fn compute(&self, pointer: Pointer) -> f64 {
         self.outputs
             .iter()
             .enumerate()
