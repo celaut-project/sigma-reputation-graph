@@ -5,7 +5,7 @@ use crate::database::global::{*};
 
 #[tokio::main]
 pub async fn store_on_db(proof_id: Option<String>, amount: i64, pointer: Option<String>, database: DatabaseAsync)
-    -> Result<ProofIdType, Error>
+    -> Result<String, Error>
 {
     match database.await {
         Ok(db) => {        
@@ -21,7 +21,7 @@ pub async fn store_on_db(proof_id: Option<String>, amount: i64, pointer: Option<
                 .await.expect(DB_ERROR_MSG)
                 .take(1).expect(DB_ERROR_MSG);
 
-            let raw_id: String = match &result[..] {
+            match &result[..] {
 
                 [_s] => {  // Match if the query result has exactly one element.
 
@@ -49,9 +49,8 @@ pub async fn store_on_db(proof_id: Option<String>, amount: i64, pointer: Option<
                     created.first().unwrap().id.to_string()              
                 }
             };
-
-            let proof_id: ProofIdType = raw_id.split_at((RESOURCE.to_owned()+":").len()).1.to_string();
-            Ok(proof_id)
+            
+            Ok(String::from(""))
         },
         Err(err) => Err(err)
     }

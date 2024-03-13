@@ -35,17 +35,17 @@ if args.test:
         gh_pointer = "github.com"
         sdb_pointer = "surrealdb.com"
         rl_pointer = "rust-lang.org"
-        v = spend("", 100, None, None)
-        v1 = spend(v, 50, None, None)
-        v12 = spend(v1, 15, sdb_pointer, None)
-        v13 = spend(v1, 20, None, None)
-        v1234 = spend(v13, 10, gh_pointer, None)
-        v2 = spend(v, 30, None, None)
-        v23 = spend(v2, 8, rl_pointer, None)
+        spend("", 100, None, None)
+        spend("", 50, None, None)
+        spend("", 15, sdb_pointer, None)
+        spend("", 20, None, None)
+        spend("", 10, gh_pointer, None)
+        spend("", 30, None, None)
+        spend("", 8, rl_pointer, None)
 
-        assert 0.1 == compute(v, gh_pointer, None)
-        assert 0.15 == compute(v, sdb_pointer, None)
-        assert 0.08 == compute(v, rl_pointer, None)
+        assert 0.429 == compute("", gh_pointer, None)
+        assert 0.15 == compute("", sdb_pointer, None)
+        assert 0.08 == compute("", rl_pointer, None)
 
         print("Works well!")
 

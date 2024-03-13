@@ -61,7 +61,7 @@ fn spend<'p>(py: Python<'p>, proof_id: &PyString, amount: i64, pointer: Option<&
             None => None
         })
     ) {
-        Ok(id) => Ok(PyString::new(py, &id)),
+        Ok(result) => Ok(PyString::new(py, &result)),
         Err(error) => Err(error)
     }
 }
