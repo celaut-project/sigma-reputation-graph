@@ -43,9 +43,9 @@ if args.test:
         spend("", 30, None, None)
         spend("", 8, rl_pointer, None)
 
-        assert 0.429 == compute("", gh_pointer, None)
-        assert 0.15 == compute("", sdb_pointer, None)
-        assert 0.08 == compute("", rl_pointer, None)
+        assert 0.04291845493562232 == compute("", gh_pointer, None)
+        assert 0.06437768240343347 == compute("", sdb_pointer, None)
+        assert 0.034334763948497854 == compute("", rl_pointer, None)
 
         print("Works well!")
 

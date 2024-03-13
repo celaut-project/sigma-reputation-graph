@@ -17,7 +17,7 @@ pub struct  PointerBox {
 impl<'a> PointerBox {
     pub(crate) fn compute(&self, pointer: Pointer) -> f64 {
         match self.pointer.clone() {
-            Pointer::ReputationProof(proof) => proof.compute(pointer),
+            Pointer::ReputationProof(proof) => if pointer == self.pointer { 1.00 } else { proof.compute(pointer) },
             Pointer::String(..) => if pointer == self.pointer { 1.00 } else { 0.00 }
         }
     }
