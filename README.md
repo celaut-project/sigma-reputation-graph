@@ -36,4 +36,4 @@ wasm-pack build --release --target web -- --features wasm-bindings
 
 
 ### For Python3.11 - Linux - x86_64
-`pip3 install https://github.com/celaut-project/sigma-reputation-graph/raw/master/target/wheels/sigma_reputation_graph-0.0.0-cp311-cp311-manylinux_2_35_x86_64.whl`
+`pip3 install https://github.com/reputation-systems/sigma-reputation-graph/raw/master/target/wheels/sigma_reputation_graph-0.0.0-cp311-cp311-manylinux_2_35_x86_64.whl`
