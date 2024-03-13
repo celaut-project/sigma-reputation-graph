@@ -74,13 +74,13 @@ Params
  */
 #[cfg(feature = "pyo3-bindings")]
 #[pyfunction]
-#[pyo3(signature = (root_id, pointer, database_file))]
-fn compute<'p>(py: Python<'p>, root_id: Option<&PyString>, pointer: &PyString, database_file: Option<&PyString>)
+#[pyo3(signature = (root_proof_id, pointer, database_file))]
+fn compute<'p>(py: Python<'p>, root_proof_id: Option<&PyString>, pointer: &PyString, database_file: Option<&PyString>)
     -> Result<&'p PyFloat, std::io::Error>
 {
     // Reads data from DB and load all the struct on memory.
     match load_from_db(
-        match root_id {
+        match root_proof_id {
             Some(id) => Some(id.to_string()),
             None => None,
         },
