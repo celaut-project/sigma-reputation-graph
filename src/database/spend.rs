@@ -29,8 +29,8 @@ pub async fn store_on_db(proof_id: Option<String>, amount: i64, pointer: Option<
                         .update((RESOURCE, _s.id.as_str()))
                         .content(RPBoxDB {
                             proof_id: _s.proof_id.clone(),
-                            amount: amount + _s.amount,
-                            pointer: pointer
+                            pointer: pointer,
+                            amount: amount + _s.amount
                         })
                         .await.expect(DB_ERROR_MSG);
 
