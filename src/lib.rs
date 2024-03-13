@@ -44,13 +44,13 @@ The pointer box parameter must be on-chain.
  */
 #[cfg(feature = "pyo3-bindings")]
 #[pyfunction]
-#[pyo3(signature = (surreal_id, amount, pointer, database_file))]
-fn spend<'p>(py: Python<'p>, surreal_id: &PyString, amount: i64, pointer: Option<&PyString>, database_file: Option<&PyString>)   // TODO surreal_id can be None
+#[pyo3(signature = (proof_id, amount, pointer, database_file))]
+fn spend<'p>(py: Python<'p>, proof_id: &PyString, amount: i64, pointer: Option<&PyString>, database_file: Option<&PyString>)   // TODO surreal_id can be None
    -> Result<&'p PyString, std::io::Error>
 {
     match store_on_db(
-        if surreal_id.len().unwrap() == 0 { None }
-            else { Some(surreal_id.to_str().unwrap().parse().unwrap()) },
+        if proof_id.len().unwrap() == 0 { None }
+            else { Some(proof_id.to_str().unwrap().parse().unwrap()) },
         amount,
         match pointer {
             Some(p) => Some(p.to_string()),

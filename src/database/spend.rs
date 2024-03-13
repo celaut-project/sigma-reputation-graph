@@ -5,7 +5,7 @@ use crate::database::global::{*};
 
 #[tokio::main]
 pub async fn store_on_db(proof_id: Option<String>, amount: i64, pointer: Option<String>, database: DatabaseAsync)
-    -> Result<String, Error>
+    -> Result<ProofIdType, Error>
 {
     match database.await {
         Ok(db) => {        
@@ -50,7 +50,7 @@ pub async fn store_on_db(proof_id: Option<String>, amount: i64, pointer: Option<
                 }
             };
 
-            let proof_id = raw_id.split_at((RESOURCE.to_owned()+":").len()).1.to_string();
+            let proof_id: ProofIdType = raw_id.split_at((RESOURCE.to_owned()+":").len()).1.to_string();
             Ok(proof_id)
         },
         Err(err) => Err(err)

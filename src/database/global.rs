@@ -7,6 +7,8 @@ pub(crate) const DATABASE: &str = "graph";
 pub(crate) const ENDPOINT: &str = "reputation.db";
 pub(crate) const RESOURCE: &str = "reputation_proof";
 
+pub(crate) type ProofIdType = String;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct RPBoxDB {
     pub(crate) proof_id: Option<String>,
