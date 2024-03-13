@@ -88,9 +88,10 @@ impl <'a> ReputationProof {
     Creates a new reputation proof from the current one.
     Raises exceptions if any rule is violated.
      */
+    #[allow(dead_code)]
     pub fn spend(&self,
                  amount: i64,
-                 pointer_box: Option<PointerBox>,
+                 _pointer_box: Option<PointerBox>,
     ) -> Result<ReputationProof, std::io::Error> {
         match self.can_be_spend(amount) {
             true => Ok(
