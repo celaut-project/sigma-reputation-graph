@@ -70,25 +70,25 @@ if args.test:
             global leaf_number
             _pointer = random_pointer() if randint(0, 1) else None
             _pointers = [_pointer] if _pointer else []
-            _v: str = spend(parent, amount, _pointer, None)
+            spend(parent, amount, _pointer, None)
             proof_number += 1
             if depth >= MAX_DEPTH or amount <= MIN_AMOUNT:
                 leaf_number += 1  # <- leaf
             else:
                 while amount > MIN_AMOUNT:
                     _amount = randint(MIN_AMOUNT, max(int(amount/5), MIN_AMOUNT))
-                    _, _p = random_proofs(parent=_v, amount=_amount, depth=depth + 1)
+                    _, _p = random_proofs(amount=_amount, depth=depth + 1)
                     if _p:
                         _pointers.extend(_p)
                     amount -= _amount
-            return _v, _pointers
+            return "", _pointers
 
         v, pointers = random_proofs(amount=MAX_AMOUNT)
 
         times = []
         for pointer in pointers:
             start = time()
-            r = compute(v, pointer, None)
+            r = compute(None, pointer, None)
             end = time()
             time_lapse = end - start
             times.append(time_lapse)
