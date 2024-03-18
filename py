@@ -100,8 +100,10 @@ if args.test:
               f"\n          avg time lapse -> {mean(times)}, "
               f"\n          SCORE -> {proof_number/mean(times)}.")
 
+    os.system("rm -rf reputation.db")
     simple_test()
     performance_test()
+    os.system("rm -rf reputation.db")
     print("\n\nTests Ok!")
 
 print("\nEnd.")
