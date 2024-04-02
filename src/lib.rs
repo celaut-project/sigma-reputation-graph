@@ -12,6 +12,7 @@ use wasm_bindgen::prelude::*;
 
 pub mod proof;
 pub mod database;
+pub mod ergo;
 
 /**
 Pyo3 doesn't support wrap structs with lifetimes on the Python interpreter.
@@ -31,6 +32,10 @@ fn submit(_proof_id: Vec<u8>)
 {
     // Verify if all the previous proofs were on-chain.
     // Submit all the proof with proof_id and all the childs.
+
+    use ergo::pull::connect_to_node;
+
+    connect_to_node()
 }
 
 /**
