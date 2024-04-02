@@ -8,7 +8,7 @@ pub(crate) const DB_ERROR_MSG: &str = "Invalid response or error connection from
 pub(crate) const NAMESPACE: &str = "local";
 pub(crate) const DATABASE: &str = "graph";
 pub(crate) const ENDPOINT: &str = "reputation.db";
-pub(crate) const RESOURCE: &str = "reputation_proof";
+pub(crate) const RESOURCE: &str = "reputation_proof_box";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct RPBoxDB {

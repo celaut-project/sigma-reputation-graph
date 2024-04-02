@@ -18,21 +18,20 @@ fn recursive(proof_id: Option<String>, db: Surreal<Db>) -> Pin<Box<dyn Future<Ou
         
         let _proof_id = proof_id.unwrap_or(String::from(""));
         let proof_boxes: Vec<RPBoxDB> = 
-            db.query("SELECT amount, pointer, proof_id FROM reputation_proof WHERE proof_id=$proof_id AND pointer!=''")
-                // .bind(("resource", RESOURCE))
+            db.query(&format!("SELECT amount, pointer, proof_id FROM {} WHERE proof_id=$proof_id AND pointer!=''", RESOURCE))
                 .bind(("proof_id", &_proof_id))
                 .await.expect(DB_ERROR_MSG).take(0).unwrap();
-
+        
         let mut proof = {
             ReputationProof::create(
                 Vec::new(),
                 {
                     let r: Vec<i64> =
-                                db.query("SELECT math::sum(amount) AS value FROM reputation_proof WHERE proof_id=$proof_id GROUP ALL")
-                                    .bind(("proof_id", &_proof_id))
-                                    .await.expect(DB_ERROR_MSG)
-                                    .take("value").expect(DB_ERROR_MSG);
-                            if let Some(value) = r.get(0) { *value } else { 0 }
+                        db.query(&format!("SELECT math::sum(amount) AS value FROM {} WHERE proof_id=$proof_id GROUP ALL", RESOURCE))
+                            .bind(("proof_id", &_proof_id))
+                            .await.expect(DB_ERROR_MSG)
+                            .take("value").expect(DB_ERROR_MSG);
+                    if let Some(value) = r.get(0) { *value } else { 0 }
                 }
             )
         };
