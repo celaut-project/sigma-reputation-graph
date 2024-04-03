@@ -33,6 +33,7 @@ serde = { version = "1.0.193", features = ["derive"], optional = true }
 futures = { version = "0.3.29", optional = true }
 openssl = { version = "0.10", features = ["vendored"], optional = true }
 ergo-node-interface = { git = "https://github.com/ergoplatform/ergo-node-interface-rust.git", version = "0.4.1"}
+json = "0.12.4"
 
 # Specify WASM dependencies
 [dependencies.wasm-bindgen]

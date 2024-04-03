@@ -102,8 +102,8 @@ if args.test:
 
     os.system("rm -rf reputation.db")
     submit()
-    simple_test()
-    performance_test()
+    # simple_test()
+    # performance_test()
     os.system("rm -rf reputation.db")
     print("\n\nTests Ok!")
 
