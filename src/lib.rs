@@ -34,9 +34,8 @@ fn submit<'p>(py: Python<'p>)
     // Verify if all the previous proofs were on-chain.
     // Submit all the proof with proof_id and all the childs.
 
-    use ergo::pull::connect_to_node;
-
-    connect_to_node()
+    use ergo::pull::pull_proofs;
+    pull_proofs()
 }
 
 /**

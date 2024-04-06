@@ -1,56 +1,63 @@
-use ergo_node_interface::{scanning::NodeError, scanning::Scan, NodeInterface};
-use json::object;
+use reqwest;
+use serde_json::json;
+use std::error::Error;
 
+use super::utils::{string_to_rendered, serialized_to_rendered, generate_pk_proposition};
 
+// Función síncrona que bloquea el hilo actual hasta que se complete la solicitud HTTP.
+fn fetch_sync(explorer_uri: &str, ergo_tree_template_hash: &str, reputation_token_label: &str, change_address: &str) -> Result<String, Box<dyn Error>> {
+    // Iniciar un nuevo runtime de Tokio para ejecutar la operación asíncrona de manera síncrona
+    let response = tokio::runtime::Runtime::new()?.block_on(async {
+        let r4_value = string_to_rendered(reputation_token_label); // Implementa esta función
+        let r7_value = serialized_to_rendered(generate_pk_proposition(change_address)); // Implementa esta función
 
-pub fn connect_to_node() {
-    let api_key = "";
-    let ip = "127.0.0.1";
-    let port = "9052"; 
-    let ergo_tree_template_hash = "fafjdka";
-    let reputation_token_label = "adfkjad";
-    let node = NodeInterface::new(api_key, ip, port);
-    /*
-Ports
-mainnet 	testnet
-API Port 	9053 	9052
-P2P Port 	9030 	9022
-address prefix 	(0) 0x00 	(16) 0x10
-     */
-    match node {
-        Ok(node) => {
-            println!("Current block height: {}", node.current_block_height().unwrap_or_default());
-            println!("Recomended fee: {}", node.get_recommended_fee(100000000, 1).unwrap_or_default());
-            fetch_current_proofs(&node, ergo_tree_template_hash, reputation_token_label);
-        },
-        Err(_) => println!("Error connecting to the node"),
+        let client = reqwest::Client::new();
+        let response = client
+            .post(format!("{}/api/v1/boxes/unspent/search", explorer_uri))
+            .json(&json!({
+                "ergoTreeTemplateHash": ergo_tree_template_hash,
+                "registers": {
+                    "R4": r4_value,
+                    "R7": r7_value,
+                },
+                "constants": {},
+                "assets": []
+            }))
+            .send()
+            .await?;
+
+        // Manejar la respuesta
+        if response.status().is_success() {
+            response.text().await
+        } else {
+            Err(response.status().to_string().into())  // TODO hay que mirar de resolver esto.
+        }
+    })?;
+
+    Ok(response)
+}
+
+pub fn pull_proofs() {
+    let explorer_uri = "https://api-testnet.ergoplatform.com"; // Reemplaza con la URI correcta
+    let contract = "{
+        proveDlog(SELF.R7[GroupElement].get) &&
+        sigmaProp(SELF.tokens.size == 1) &&
+        sigmaProp(OUTPUTS.forall { (x: Box) =>
+          !(x.tokens.exists { (token: (Coll[Byte], Long)) => token._1 == SELF.tokens(0)._1 }) ||
+          (
+            x.R7[GroupElement].get == SELF.R7[GroupElement].get &&
+            x.tokens.size == 1 &&
+            x.propositionBytes == SELF.propositionBytes
+          )
+        })  
+    }";
+    // TODO ergo-reputation-system envs.ts  ...
+    let ergo_tree_template_hash = "your_ergo_tree_template_hash"; // Reemplaza con tu valor
+    let reputation_token_label = "your_reputation_token_label"; // Reemplaza con tu valor
+    let change_address = "your_change_address"; // Reemplaza con la dirección de cambio
+
+    match fetch_sync(explorer_uri, ergo_tree_template_hash, reputation_token_label, change_address) {
+        Ok(response) => println!("Response: {}", response),
+        Err(e) => eprintln!("Error: {}", e),
     }
-} 
-
-/// Function to fetch current proofs.
-fn fetch_current_proofs(node: &NodeInterface, ergo_tree_template_hash: &str, reputation_token_label: &str) {
-    // Generate the proposition (public key) for the change address.
-    // Assuming `generate_pk_proposition` and `string_to_rendered` are defined elsewhere.
-    /* 
-     let pk_proposition = generate_pk_proposition(node.get_change_address()?);
-     let serialized_pk_proposition = serialized_to_rendered(pk_proposition);
-    */
-
-    // Create the tracking rule JSON.
-    let tracking_rule = object! {
-        "predicate": "containsAsset",
-        "assetId": "c95d7bd2c74986195bcebf516f619167d8235f3ded4260c0e3a7bc5824f72af8"
-    };
-
-    // Register the scan with the node.
-    match Scan::register(&"FetchCurrentProofs".to_string(), tracking_rule, node) {
-        Ok(scan) => {
-            match scan.get_serialized_boxes() {
-                Ok(s) => s.iter().map(|b| println!("box -> {}", b)).collect::<Vec<_>>(),
-                Err(_) => {println!("Get serialized boxes error."); vec![]},
-            }
-        },
-        Err(_) => {println!("Error getting the scan."); vec![]},
-    };
-
 }
