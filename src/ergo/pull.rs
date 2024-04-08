@@ -1,13 +1,14 @@
 use reqwest;
 use serde_json::json;
 use std::error::Error;
+use std::io::{self, ErrorKind};
 
 use super::utils::{string_to_rendered, serialized_to_rendered, generate_pk_proposition};
 
 // Función síncrona que bloquea el hilo actual hasta que se complete la solicitud HTTP.
 fn fetch_sync(explorer_uri: &str, ergo_tree_template_hash: &str, reputation_token_label: &str, change_address: &str) -> Result<String, Box<dyn Error>> {
-    // Iniciar un nuevo runtime de Tokio para ejecutar la operación asíncrona de manera síncrona
-    let response = tokio::runtime::Runtime::new()?.block_on(async {
+    let runtime = tokio::runtime::Runtime::new()?;
+    let response = runtime.block_on(async {
         let r4_value = string_to_rendered(reputation_token_label); // Implementa esta función
         let r7_value = serialized_to_rendered(generate_pk_proposition(change_address)); // Implementa esta función
 
@@ -24,13 +25,20 @@ fn fetch_sync(explorer_uri: &str, ergo_tree_template_hash: &str, reputation_toke
                 "assets": []
             }))
             .send()
-            .await?;
+            .await;
 
-        // Manejar la respuesta
-        if response.status().is_success() {
-            response.text().await
-        } else {
-            Err(response.status().to_string().into())  // TODO hay que mirar de resolver esto.
+        match response {
+            Ok(resp) => {
+                if resp.status().is_success() {
+                    resp.text().await.map_err(|e| e.into())
+                } else {
+                    let error_message = format!("Error: {}", resp.status());
+                    Err(Box::new(io::Error::new(ErrorKind::Other, error_message)) as Box<dyn Error>)
+                }
+            },
+            Err(e) => {
+                Err(Box::new(e) as Box<dyn Error>)
+            }
         }
     })?;
 
@@ -52,6 +60,12 @@ pub fn pull_proofs() {
         })  
     }";
     // TODO ergo-reputation-system envs.ts  ...
+
+    // let ergoTree = compile(contract, {version: 1})
+   
+    let ergo_tree_address = ""; // let ergoTreeAddress = ErgoAddress.fromErgoTree(ergoTree.toHex(), Network.Testnet).toString()
+    let ergo_tree_hash = ""; // let ergoTreeHash = hex.encode(sha256(ergoTree.template.toBytes()))
+
     let ergo_tree_template_hash = "your_ergo_tree_template_hash"; // Reemplaza con tu valor
     let reputation_token_label = "your_reputation_token_label"; // Reemplaza con tu valor
     let change_address = "your_change_address"; // Reemplaza con la dirección de cambio
