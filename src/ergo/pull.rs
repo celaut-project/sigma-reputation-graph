@@ -5,12 +5,11 @@ use std::io::{self, ErrorKind};
 
 use super::utils::{string_to_rendered, serialized_to_rendered, generate_pk_proposition};
 
-// Función síncrona que bloquea el hilo actual hasta que se complete la solicitud HTTP.
 fn fetch_sync(explorer_uri: &str, ergo_tree_template_hash: &str, reputation_token_label: &str, change_address: &str) -> Result<String, Box<dyn Error>> {
     let runtime = tokio::runtime::Runtime::new()?;
     let response = runtime.block_on(async {
-        let r4_value = string_to_rendered(reputation_token_label); // Implementa esta función
-        let r7_value = serialized_to_rendered(generate_pk_proposition(change_address)); // Implementa esta función
+        let r4_value = string_to_rendered(reputation_token_label);
+        let r7_value = serialized_to_rendered(generate_pk_proposition(change_address));
 
         let client = reqwest::Client::new();
         let response = client
