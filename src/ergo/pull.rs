@@ -8,17 +8,14 @@ use super::utils::{string_to_rendered, serialized_to_rendered, generate_pk_propo
 fn fetch_sync(explorer_uri: &str, ergo_tree_template_hash: &str, reputation_token_label: &str, change_address: &str) -> Result<String, Box<dyn Error>> {
     let runtime = tokio::runtime::Runtime::new()?;
     let response = runtime.block_on(async {
-        let r4_value = string_to_rendered(reputation_token_label);
-        let r7_value = serialized_to_rendered(generate_pk_proposition(change_address));
-
         let client = reqwest::Client::new();
         let response = client
             .post(format!("{}/api/v1/boxes/unspent/search", explorer_uri))
             .json(&json!({
                 "ergoTreeTemplateHash": ergo_tree_template_hash,
                 "registers": {
-                    "R4": r4_value,
-                    "R7": r7_value,
+                    "R4": string_to_rendered(reputation_token_label),
+                    "R7": serialized_to_rendered(generate_pk_proposition(change_address)),
                 },
                 "constants": {},
                 "assets": []
