@@ -24,10 +24,7 @@ pub fn wait_for_tx_confirmation(tx_id: TxId) {
 
 pub fn wait_for_txs_confirmation(tx_ids: Vec<TxId>) {
     let timeout = Duration::from_secs(1200);
-    let explorer_url = Endpoints::default()
-        .explorer_url
-        .clone();
-    let explorer_api = ExplorerApi::new(explorer_url);
+    let explorer_api = ExplorerApi::new();
     let start_time = std::time::Instant::now();
     println!("Waiting for block confirmation from ExplorerApi for tx ids: {tx_ids:?} ...");
     let mut remaining_txs = tx_ids.clone();

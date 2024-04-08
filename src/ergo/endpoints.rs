@@ -39,10 +39,11 @@ impl Default for Endpoints {
     fn default() -> Self {
         let address: NetworkAddress = AddressEncoder::unchecked_parse_network_address_from_str(ADDRESS).unwrap();
         let network: NetworkPrefix = address.network();
+        let explorer_url: Url = default_explorer_api_url(network);
         Endpoints {
             node_url: Url::parse(LOCAL_NODE_URL).unwrap(),
             address,
-            explorer_url: default_explorer_api_url(network)
+            explorer_url: explorer_url.clone()
         }
     }
 }
