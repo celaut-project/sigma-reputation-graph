@@ -1,5 +1,6 @@
 use ergo_lib::ergoscript_compiler::compiler::CompileError;
 use ergo_lib::ergotree_ir::chain::address::NetworkPrefix;
+use ergo_lib::ergotree_ir::chain::address::AddressEncoder;
 use ergo_lib::ergotree_ir::ergo_tree::ErgoTree;
 use ergo_lib::ergotree_ir::ergo_tree::ErgoTreeError;
 use ergo_lib::ergotree_ir::serialization::SigmaParsingError;
@@ -7,7 +8,7 @@ use ergo_lib::ergoscript_compiler::compiler::compile;
 use ergo_lib::ergoscript_compiler::script_env::ScriptEnv;
 use ergo_lib::ergotree_ir::chain::address::NetworkAddress;
 use ergo_lib::ergotree_ir::serialization::SigmaSerializable;
-use super::address_util::pks_to_network_addresses;
+use hex::ToHex;
 use sha2::{Digest, Sha256};
 use hex;
 use thiserror::Error;
@@ -61,18 +62,20 @@ impl ProofContract {
     }
 
     pub fn ergo_tree_address(&self, network_prefix: NetworkPrefix) -> Vec<NetworkAddress> {
-        pks_to_network_addresses(
-            {
-                self.ergo_tree.to_ec_point_vector(); // todo()
-                vec![]
-            },   
-            network_prefix
-        )
+        let encoder = AddressEncoder::new(NetworkPrefix::Mainnet);
+        let addr: String = self.ergo_tree.to_base16_bytes().unwrap_or_default().encode_hex();  // todo() needs to be checked.
+        let address = encoder
+            .parse_address_from_str(addr.as_str())
+            .unwrap();
+        vec![NetworkAddress::new(
+            network_prefix,
+            &address
+        )]
     }
 
-    pub fn ergo_tree_hash(&self) -> Result<&str, ErgoTreeError> {
+    pub fn ergo_tree_hash(&self) -> Result<String, ErgoTreeError> {
         match self.ergo_tree.template_bytes() {
-            Ok(template) => Ok(&hex::encode(Sha256::digest(template)).to_string()),
+            Ok(template) => Ok(hex::encode(Sha256::digest(template)).to_string()),
             Err(err) => Err(err),
         }
         
