@@ -73,11 +73,10 @@ impl ProofContract {
         )]
     }
 
-    pub fn ergo_tree_hash(&self) -> Result<String, ErgoTreeError> {
+    pub fn ergo_tree_hash(&self) -> Result<String, ProofContractError> {
         match self.ergo_tree.template_bytes() {
             Ok(template) => Ok(hex::encode(Sha256::digest(template)).to_string()),
-            Err(err) => Err(err),
+            Err(err) => Err(ProofContractError::ErgoTreeError(err)),
         }
-        
     }
 }

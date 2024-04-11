@@ -28,8 +28,8 @@ pub fn pull_proofs() {
                     todo!()
                 },
             };
-            let reputation_token_label = "your_reputation_token_label"; 
-            let change_address = "your_change_address";
+            let reputation_token_label = "your_reputation_token_label"; // TODO 
+            let change_address = "your_change_address";  //  TODO
         
             match fetch_sync(ergo_tree_template_hash.as_str(), reputation_token_label, change_address) {
                 Ok(response) => println!("Response: {}", response),
