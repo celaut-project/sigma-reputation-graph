@@ -9,7 +9,7 @@ fn fetch_sync(ergo_tree_template_hash: &str, reputation_token_label: &str, chang
     ExplorerApi::new().get_unspend_boxes_search(json!({
         "ergoTreeTemplateHash": ergo_tree_template_hash,
         "registers": {
-            "R4": string_to_rendered(reputation_token_label),
+            "R4": string_to_rendered(reputation_token_label)?,
             "R7": serialized_to_rendered(generate_pk_proposition(change_address)),
         },
         "constants": {},
