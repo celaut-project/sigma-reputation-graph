@@ -1,7 +1,8 @@
-use std::{str, vec};
-use anyhow::Ok;
+use bs58;
+use std::str::from_utf8;
 use ergo_lib::ergotree_ir::base16_str::Base16Str;
 use ergo_lib::ergotree_ir::chain::address::{AddressEncoder, NetworkPrefix};
+use ergo_lib::ergotree_ir::serialization::SigmaSerializable;
 use crate::ergo::decoder::CoderType::Base64;
 use ergo_lib::ergotree_ir::mir::value::NativeColl;
 use ergo_lib::ergotree_ir::types::stype::SType;
@@ -11,7 +12,7 @@ use ergo_lib::ergotree_ir::mir::value::CollKind;
 use crate::ergo::decoder::string_to_bytes;
 
 
-pub fn generate_pk_proposition(wallet_pk: &str) -> Result<&str, anyhow::Error> {
+pub fn generate_pk_proposition(base58_wallet_pk: &str) -> Result<String, anyhow::Error> {
 
     /**
      * 
@@ -20,9 +21,19 @@ pub fn generate_pk_proposition(wallet_pk: &str) -> Result<&str, anyhow::Error> {
     return encodedProp.toHex();
      */
 
-    let encoder = AddressEncoder::new(NetworkPrefix::Mainnet);
-    let pk = encoder.parse_address_from_str(wallet_pk)?;
-    unimplemented!()
+    let network_prefix = NetworkPrefix::Mainnet;
+    let encoder = AddressEncoder::new(network_prefix);
+    let pk = encoder.parse_address_from_str(base58_wallet_pk)?;
+    let script = pk.script()?;
+    
+    let serialized = script.sigma_serialize_bytes()?;
+    let serialized2 = serialized.clone();
+
+    let bs58_str: String = bs58::encode(serialized).into_string();
+
+    let hex_string: String = serialized2.iter().map(|byte| format!("{:02x}", byte)).collect();
+    
+    Ok(bs58_str)
 }
 
 // Convert a hex string to a UTF-8 string
@@ -33,7 +44,7 @@ fn hex_to_utf8(hex_string: &str) -> Result<String, anyhow::Error> {
     }
 
     let bytes = hex::decode(hex_string).expect("Decoding failed");
-    let utf8_string = str::from_utf8(&bytes)?;
+    let utf8_string = from_utf8(&bytes)?;
 
     Ok(utf8_string.to_string())
 }
@@ -55,11 +66,14 @@ fn string_to_serialized(value: &str) -> anyhow::Result<String> {
 // Convert a serialized value to a rendered string
 pub fn serialized_to_rendered(serialized_value: &str) -> String {
     let pattern_to_strip = "0e";
-    if serialized_value.starts_with(pattern_to_strip) {
-        serialized_value[pattern_to_strip.len()..].to_string()
+    let result = if serialized_value.starts_with(pattern_to_strip) {
+        // Remove the pattern
+        &serialized_value[pattern_to_strip.len()..]
     } else {
-        serialized_value.to_string() // or handle this case as needed
-    }
+        serialized_value
+    };
+    let chars_to_skip = 2;
+    result.chars().skip(chars_to_skip).collect()
 }
 
 // Convert a string to a rendered string

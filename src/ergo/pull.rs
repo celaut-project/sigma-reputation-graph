@@ -1,7 +1,7 @@
 use serde_json::json;
 use std::error::Error;
 
-use super::contract::{self, ProofContract};
+use super::contract::ProofContract;
 use super::explorer::explorer_api::ExplorerApi;
 use super::utils::{string_to_rendered, serialized_to_rendered, generate_pk_proposition};
 
@@ -10,7 +10,7 @@ fn fetch_sync(ergo_tree_template_hash: &str, reputation_token_label: &str, walle
         "ergoTreeTemplateHash": ergo_tree_template_hash,
         "registers": {
             "R4": string_to_rendered(reputation_token_label)?,
-            "R7": serialized_to_rendered(generate_pk_proposition(wallet_pk)),
+            "R7": serialized_to_rendered(generate_pk_proposition(wallet_pk)?.as_str()),
         },
         "constants": {},
         "assets": []

@@ -43,6 +43,7 @@ log = "0.4.11"
 once_cell = "1.15.0"
 sha2 = "0.10"
 base16 = "0.2.1"
+bs58 = "0.5.1"
 base64 = "0.22"
 
 # Specify WASM dependencies
