@@ -1,6 +1,7 @@
 use std::{str, vec};
 use anyhow::Ok;
 use ergo_lib::ergotree_ir::base16_str::Base16Str;
+use ergo_lib::ergotree_ir::chain::address::{AddressEncoder, NetworkPrefix};
 use crate::ergo::decoder::CoderType::Base64;
 use ergo_lib::ergotree_ir::mir::value::NativeColl;
 use ergo_lib::ergotree_ir::types::stype::SType;
@@ -10,7 +11,17 @@ use ergo_lib::ergotree_ir::mir::value::CollKind;
 use crate::ergo::decoder::string_to_bytes;
 
 
-pub fn generate_pk_proposition(wallet_pl: &str) -> &str {
+pub fn generate_pk_proposition(wallet_pk: &str) -> Result<&str, anyhow::Error> {
+
+    /**
+     * 
+    const pk = ErgoAddress.fromBase58(wallet_pk).getPublicKeys()[0];
+    const encodedProp = SGroupElement(pk);
+    return encodedProp.toHex();
+     */
+
+    let encoder = AddressEncoder::new(NetworkPrefix::Mainnet);
+    let pk = encoder.parse_address_from_str(wallet_pk)?;
     unimplemented!()
 }
 
