@@ -1,4 +1,7 @@
-use std::str;
+use std::{str, vec};
+use anyhow::Ok;
+use ergo_lib::ergotree_ir::base16_str::Base16Str;
+use crate::ergo::decoder::CoderType::Base64;
 use ergo_lib::ergotree_ir::mir::value::NativeColl;
 use ergo_lib::ergotree_ir::types::stype::SType;
 use ergo_lib::ergotree_ir::mir::constant::{Constant, Literal};
@@ -6,16 +9,13 @@ use ergo_lib::ergotree_ir::mir::value::CollKind;
 
 use crate::ergo::decoder::string_to_bytes;
 
-use super::decoder::CoderError;
-
 
 pub fn generate_pk_proposition(wallet_pl: &str) -> &str {
-    // todo
-    wallet_pl
+    unimplemented!()
 }
 
 // Convert a hex string to a UTF-8 string
-fn hex_to_utf8(hex_string: &str) -> Result<String, std::str::Utf8Error> {
+fn hex_to_utf8(hex_string: &str) -> Result<String, anyhow::Error> {
     if hex_string.len() % 2 != 0 {
         eprintln!("The hexadecimal string has an odd length.");
         panic!()
@@ -28,18 +28,17 @@ fn hex_to_utf8(hex_string: &str) -> Result<String, std::str::Utf8Error> {
 }
 
 // Serialize a string to a format suitable for rendering
-fn string_to_serialized(value: &str) -> Result<String, CoderError> {
-    // On TS with fleet is --> SConstant(SColl(SByte, stringToBytes('utf8', value)));
+fn string_to_serialized(value: &str) -> anyhow::Result<String> {
+    let bytes = string_to_bytes(Base64, value)?;
 
-    // let decoded = string_to_bytes('utf8', value);
-    match string_to_bytes(crate::ergo::decoder::CoderType::Base64, value) {
-        Ok(value) => Ok(Constant {
-            tpe: SType::SColl(Box::new(SType::SByte)),
-            v: Literal::Coll(CollKind::NativeColl(NativeColl::CollByte(value)))
-        }),
-        Err(err) => Err(err)
+    let constant = Constant {
+        tpe: SType::SColl(Box::new(SType::SByte)),
+        v: Literal::Coll(CollKind::NativeColl(NativeColl::CollByte(bytes)))
     };
-    unimplemented!()
+
+    let base16_encoded = constant.base16_str().map_err(anyhow::Error::from)?;
+
+    Ok(base16_encoded)
 }
 
 // Convert a serialized value to a rendered string
@@ -53,9 +52,6 @@ pub fn serialized_to_rendered(serialized_value: &str) -> String {
 }
 
 // Convert a string to a rendered string
-pub fn string_to_rendered(value: &str) -> Result<String, CoderError> {
-    match string_to_serialized(value) {
-        Ok(value) => Ok(serialized_to_rendered(&value)),
-        Err(err) => Err(err)
-    }
+pub fn string_to_rendered(value: &str) -> anyhow::Result<String> {
+    Ok(serialized_to_rendered(&string_to_serialized(value)?))
 }
