@@ -58,7 +58,7 @@ pub fn pull_proofs() {
             };
             ergo_tree_template_hash
         },
-        Err(_) => String::from("18505af21d77405d225cf586591b23303776fbb1a6e4f2adec2a15ddf83d5684"),
+        Err(_) => String::from("18505af21d77405d225cf586591b23303776fbb1a6e4f2adec2a15ddf83d5684"),  // contract template compiled.
     };
     
     let reputation_token_label = "RPT"; // TODO 
