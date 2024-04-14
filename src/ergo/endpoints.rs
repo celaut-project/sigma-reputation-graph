@@ -4,8 +4,6 @@ use serde::{Deserialize, Serialize};
 
 const LOCAL_NODE_URL: &str = "https://localhost:9053/";
 
-const ADDRESS: &str = "9hEQHEMyY1K1vs79vJXFtNjr2dbQbtWXF99oVWGJ5c4xbcLdBsw";
-
 const MAINNET_EXPLORER_URL: &str = "https://explorer.ergoplatform.com/";
 const TESTNET_EXPLORER_URL: &str = "https://testnet.ergoplatform.com/";
 
@@ -31,18 +29,15 @@ fn default_explorer_url(network_prefix: NetworkPrefix) -> Url {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Endpoints {
     pub node_url: Url,
-    pub address: NetworkAddress,  // todo () what is this ?
     pub explorer_url: Url
 }
 
 impl Default for Endpoints {
     fn default() -> Self {
-        let address: NetworkAddress = AddressEncoder::unchecked_parse_network_address_from_str(ADDRESS).unwrap();
-        let network: NetworkPrefix = address.network();
+        let network: NetworkPrefix = NetworkPrefix::Testnet; // TODO make as parameter.
         let explorer_url: Url = default_explorer_api_url(network);
         Endpoints {
             node_url: Url::parse(LOCAL_NODE_URL).unwrap(),
-            address,
             explorer_url: explorer_url.clone()
         }
     }
