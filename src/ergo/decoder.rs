@@ -39,7 +39,7 @@ fn hex_decode(input: &str) -> Result<Vec<u8>, CoderError> {
     hex::decode(input).map_err(|_| CoderError::InvalidInput)
 }
 
-fn vec_u8_to_vec_i8(vec_u8: Vec<u8>) -> Vec<i8> {
+pub fn vec_u8_to_vec_i8(vec_u8: Vec<u8>) -> Vec<i8> {
     vec_u8.into_iter().map(|x| x as i8).collect()
 }
 

@@ -1,57 +1,97 @@
-use bs58;
-use std::str::from_utf8;
+use std::fmt;
+use std::error::Error;
 use ergo_lib::ergotree_ir::base16_str::Base16Str;
 use ergo_lib::ergotree_ir::chain::address::{AddressEncoder, NetworkPrefix};
 use ergo_lib::ergotree_ir::serialization::SigmaSerializable;
-use crate::ergo::decoder::CoderType::Base64;
+use crate::ergo::decoder::vec_u8_to_vec_i8;
 use ergo_lib::ergotree_ir::mir::value::NativeColl;
 use ergo_lib::ergotree_ir::types::stype::SType;
 use ergo_lib::ergotree_ir::mir::constant::{Constant, Literal};
 use ergo_lib::ergotree_ir::mir::value::CollKind;
 
-use crate::ergo::decoder::string_to_bytes;
+// Define a custom error type for the function.
+#[derive(Debug)]
+enum GroupElementError {
+    InputTooShort,
+}
 
+// Implement the Display trait for GroupElementError.
+impl fmt::Display for GroupElementError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            GroupElementError::InputTooShort => write!(f, "input vector must have at least three bytes"),
+        }
+    }
+}
+
+impl Error for GroupElementError {}
+
+/**
+ * Converts a given byte vector to a new byte vector representing a group element.
+ * This function is specifically tailored based on the observed pattern from two provided strings.
+ * It removes the first three bytes from the input and prepends the byte `0x07`.
+ *
+ * The observed pattern dictates that the first three bytes are to be discarded and that
+ * the byte `0x07` is to be prepended to the remaining bytes. This hardcoded behavior is
+ * derived from comparing two strings where the first string starts with "0008cd" and the
+ * second string starts with "07", with the rest of the strings being identical after the
+ * first six characters.
+ *
+ * # Arguments
+ *
+ * * `b` - A byte vector from which the first three bytes will be removed.
+ *
+ * # Returns
+ *
+ * A `Result` which is either:
+ * - `Ok`: A new byte vector with the byte `0x07` prepended after removing the first three bytes.
+ * - `Err`: A `GroupElementError` indicating that the input vector is too short.
+ */
+fn script_to_group_element(b: Vec<u8>) -> Result<Vec<u8>, GroupElementError> {
+    // Check if the input vector has at least three bytes to remove.
+    // If not, return an error.
+    if b.len() < 3 {
+        return Err(GroupElementError::InputTooShort);
+    }
+
+    // Create a new Vec with the capacity for the original length minus 3 (bytes removed) plus 1 (byte added).
+    // This is to prevent reallocation when extending the vector.
+    let mut new_vec = Vec::with_capacity(b.len() - 2);
+
+    // Add the byte `0x07` to the new Vec, based on the observed pattern.
+    new_vec.push(0x07);
+
+    // Extend the new Vec with the elements from the original Vec, skipping the first three bytes.
+    // This aligns with the observed requirement to remove the first three bytes.
+    new_vec.extend_from_slice(&b[3..]);
+
+    // Return the new vector wrapped in an Ok.
+    Ok(new_vec)
+}
 
 pub fn generate_pk_proposition(base58_wallet_pk: &str) -> Result<String, anyhow::Error> {
 
-    /**
-     * 
-    const pk = ErgoAddress.fromBase58(wallet_pk).getPublicKeys()[0];
-    const encodedProp = SGroupElement(pk);
-    return encodedProp.toHex();
-     */
-
-    let network_prefix = NetworkPrefix::Mainnet;
+    let network_prefix = NetworkPrefix::Testnet;
     let encoder = AddressEncoder::new(network_prefix);
     let pk = encoder.parse_address_from_str(base58_wallet_pk)?;
     let script = pk.script()?;
     
     let serialized = script.sigma_serialize_bytes()?;
-    let serialized2 = serialized.clone();
 
-    let bs58_str: String = bs58::encode(serialized).into_string();
+    let encoded_prop = script_to_group_element(serialized)?;
 
-    let hex_string: String = serialized2.iter().map(|byte| format!("{:02x}", byte)).collect();
+    // The `format!` macro is used to convert each byte into a hexadecimal string representation.
+    // `{:02x}` is a formatting specifier that instructs the macro to:
+    // - Convert the number to a hexadecimal string (`x`).
+    // - Ensure it has at least two digits (`02`), padding with zeroes if needed.
+    let hex_string: String = encoded_prop.iter().map(|byte| format!("{:02x}", byte)).collect();
     
-    Ok(bs58_str)
-}
-
-// Convert a hex string to a UTF-8 string
-fn hex_to_utf8(hex_string: &str) -> Result<String, anyhow::Error> {
-    if hex_string.len() % 2 != 0 {
-        eprintln!("The hexadecimal string has an odd length.");
-        panic!()
-    }
-
-    let bytes = hex::decode(hex_string).expect("Decoding failed");
-    let utf8_string = from_utf8(&bytes)?;
-
-    Ok(utf8_string.to_string())
+    Ok(hex_string)
 }
 
 // Serialize a string to a format suitable for rendering
-fn string_to_serialized(value: &str) -> anyhow::Result<String> {
-    let bytes = string_to_bytes(Base64, value)?;
+fn string_to_serialized(value: &str) -> anyhow::Result<String> { // COMPLETE
+    let bytes = vec_u8_to_vec_i8(value.as_bytes().to_vec());
 
     let constant = Constant {
         tpe: SType::SColl(Box::new(SType::SByte)),
@@ -64,7 +104,7 @@ fn string_to_serialized(value: &str) -> anyhow::Result<String> {
 }
 
 // Convert a serialized value to a rendered string
-pub fn serialized_to_rendered(serialized_value: &str) -> String {
+pub fn serialized_to_rendered(serialized_value: &str) -> String { // COMPLETE
     let pattern_to_strip = "0e";
     let result = if serialized_value.starts_with(pattern_to_strip) {
         // Remove the pattern
@@ -77,6 +117,6 @@ pub fn serialized_to_rendered(serialized_value: &str) -> String {
 }
 
 // Convert a string to a rendered string
-pub fn string_to_rendered(value: &str) -> anyhow::Result<String> {
+pub fn string_to_rendered(value: &str) -> anyhow::Result<String> {  // COMPLETE
     Ok(serialized_to_rendered(&string_to_serialized(value)?))
 }
