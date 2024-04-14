@@ -1,6 +1,8 @@
 use serde_json::json;
 use std::error::Error;
 
+use crate::ergo::box_vector::Root;
+
 use super::contract::ProofContract;
 use super::explorer::explorer_api::ExplorerApi;
 use super::utils::{string_to_rendered, serialized_to_rendered, generate_pk_proposition};
@@ -37,7 +39,19 @@ pub fn pull_proofs() {
     let wallet_pk = "3WyS9EoJJ4zhJf2Eit5m836F6iYNya5SssKFAYH8crwwbSSLHxri";  //  TODO
 
     match fetch_sync(&contract.as_str(), reputation_token_label, wallet_pk) {
-        Ok(response) => println!("Response: {}", response),
+        Ok(response) => {
+            let parsed_value:  Result<Root, serde_json::Error> = serde_json::from_str(&response);
+            match parsed_value {
+                Ok(parsed_data) => {
+                    // Now you can work with the parsed_data object in Rust.
+                    println!("  parsed value  {:#?}", parsed_data);
+                },
+                Err(e) => {
+                    // Handle the error, e.g., by logging it or displaying a message to the user.
+                    eprintln!("Failed to parse JSON data: {}", e);
+                }
+            };
+        },
         Err(e) => eprintln!("Error: {}", e),
     }
 }

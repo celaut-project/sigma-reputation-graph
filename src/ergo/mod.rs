@@ -5,3 +5,4 @@ pub(crate) mod explorer;
 pub(crate) mod contract;
 pub(crate) mod address_util;
 pub(crate) mod decoder;
+pub(crate) mod box_vector;
