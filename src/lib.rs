@@ -29,7 +29,7 @@ with the DB, but in isolation for each call).
 #[cfg(feature = "pyo3-bindings")]
 #[pyfunction]
 #[pyo3(signature = ())]
-fn submit<'p>(py: Python<'p>)
+fn fetch<'p>(py: Python<'p>)
 {
     // Verify if all the previous proofs were on-chain.
     // Submit all the proof with proof_id and all the childs.
@@ -109,7 +109,7 @@ fn compute<'p>(py: Python<'p>, root_proof_id: Option<&PyString>, pointer: &PyStr
 #[cfg(feature = "pyo3-bindings")]
 #[pymodule]
 fn sigma_reputation_graph(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(submit, m)?)?;
+    m.add_function(wrap_pyfunction!(fetch, m)?)?;
     m.add_function(wrap_pyfunction!(spend, m)?)?;
     m.add_function(wrap_pyfunction!(compute, m)?)?;
     Ok(())
