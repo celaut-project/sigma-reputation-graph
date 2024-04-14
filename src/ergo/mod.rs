@@ -1,4 +1,4 @@
-pub mod pull;
+pub mod fetch;
 pub(crate) mod utils;
 pub(crate) mod endpoints;
 pub(crate) mod explorer;

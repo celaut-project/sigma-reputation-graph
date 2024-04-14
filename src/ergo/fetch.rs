@@ -19,7 +19,7 @@ fn fetch_sync(ergo_tree_template_hash: &str, reputation_token_label: &str, walle
     }))
 }
 
-pub fn pull_proofs() {
+pub fn fetch_proofs() {
     let contract = ProofContract::new();
     let contract: String = match contract {
         Ok(contract) => {

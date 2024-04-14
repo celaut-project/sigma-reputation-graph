@@ -31,8 +31,8 @@ with the DB, but in isolation for each call).
 #[pyo3(signature = ())]
 fn fetch<'p>(py: Python<'p>)
 {
-    use ergo::pull::pull_proofs;
-    pull_proofs()
+    use ergo::fetch::fetch_proofs;
+    fetch_proofs()
 }
 
 
