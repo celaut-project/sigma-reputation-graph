@@ -17,34 +17,6 @@ fn fetch_sync(ergo_tree_template_hash: &str, reputation_token_label: &str, walle
     }))
 }
 
-/*
-pub fn pull_proofs() {
-    let contract = ProofContract::new();
-    match contract {
-        Ok(contract) => {
-            let ergo_tree_template_hash: String = match contract.ergo_tree_hash() {
-                Ok(_h) => _h,
-                Err(_) => {
-                    println!("Error en ergo_tree_hash");
-                    todo!()
-                },
-            };
-            let reputation_token_label = "your_reputation_token_label"; // TODO 
-            let wallet_pk = "your_change_address";  //  TODO
-        
-            match fetch_sync(ergo_tree_template_hash.as_str(), reputation_token_label, wallet_pk) {
-                Ok(response) => println!("Response: {}", response),
-                Err(e) => eprintln!("Error: {}", e),
-            }
-        },
-        Err(_) => {
-            println!("Error en contract generation ");
-            todo!()
-        },
-    }
-} */
-
-
 pub fn pull_proofs() {
     let contract = ProofContract::new();
     let contract: String = match contract {
