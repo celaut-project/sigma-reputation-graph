@@ -3,14 +3,14 @@ use std::collections::HashMap;
 
 // Define the root structure that holds everything.
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Root {
-    pub items: Vec<BoxItem>,
+pub(crate) struct Root {
+    pub(crate) items: Vec<BoxItem>,
     total: usize,
 }
 
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct BoxItem {
+pub(crate) struct BoxItem {
     #[serde(rename = "boxId")]
     box_id: Option<String>,
     #[serde(rename = "transactionId")]
@@ -24,7 +24,7 @@ pub struct BoxItem {
     #[serde(rename = "creationHeight")]
     creation_height: Option<usize>,
     #[serde(rename = "settlementHeight")]
-    settlement_height: Option<usize>,
+    pub(crate) settlement_height: Option<usize>,
     #[serde(rename = "ergoTree")]
     ergo_tree: Option<String>,
     #[serde(rename = "ergoTreeConstants")]
@@ -32,9 +32,9 @@ pub struct BoxItem {
     #[serde(rename = "ergoTreeScript")]
     ergo_tree_script: Option<String>,
     address: Option<String>,
-    pub assets: Option<Vec<Asset>>,
+    pub(crate) assets: Option<Vec<Asset>>,
     #[serde(rename = "additionalRegisters")]
-    pub additional_registers: Option<HashMap<
+    pub(crate) additional_registers: Option<HashMap<
             String, AdditionalRegister>>,
     #[serde(rename = "spentTransactionId")]
     spent_transaction_id: Option<String>,
@@ -43,23 +43,23 @@ pub struct BoxItem {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Asset {
+pub(crate) struct Asset {
     #[serde(rename = "tokenId")]
-    pub token_id: Option<String>,
-    pub index: Option<usize>,
-    pub amount: Option<u64>,
-    pub name: Option<String>,
-    pub decimals: Option<u8>,
+    pub(crate) token_id: Option<String>,
+    pub(crate) index: Option<usize>,
+    pub(crate) amount: Option<u64>,
+    pub(crate) name: Option<String>,
+    pub(crate) decimals: Option<u8>,
     #[serde(rename = "type")]
-    pub asset_type: Option<String>,
+    pub(crate) asset_type: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct AdditionalRegister {
+pub(crate) struct AdditionalRegister {
     #[serde(rename = "serializedValue")]
     serialized_value: Option<String>,
     #[serde(rename = "sigmaType")]
     sigma_type: Option<String>,
     #[serde(rename = "renderedValue")]
-    pub rendered_value: Option<String>,
+    pub(crate) rendered_value: Option<String>,
 }

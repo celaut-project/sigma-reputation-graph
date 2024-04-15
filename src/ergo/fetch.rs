@@ -69,7 +69,7 @@ pub fn fetch_proofs(database_file: Option<String>) {
                                             },
                                         None => None
                                     },
-                                    Some(0),
+                                    box_item.settlement_height,
                                     generate(database_file.clone())
                                 ) {
                                     Ok(result) => println!("ELEMENTO ESTABLECIDO CON EXITO {:?}", result),

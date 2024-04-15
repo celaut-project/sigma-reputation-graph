@@ -7,7 +7,7 @@ use crate::database::global::{*};
 If the data originates from the Ergo platform, the corresponding block number is added; otherwise, a value of zero is recorded.
 */
 #[tokio::main]
-pub async fn store_on_db(proof_id: Option<String>, amount: i64, pointer: Option<String>, ergo_block: Option<u64>, database: DatabaseAsync)
+pub async fn store_on_db(proof_id: Option<String>, amount: i64, pointer: Option<String>, ergo_block: Option<usize>, database: DatabaseAsync)
     -> Result<String, Error>
 {
     match database.await {
@@ -35,7 +35,7 @@ pub async fn store_on_db(proof_id: Option<String>, amount: i64, pointer: Option<
                             proof_id: _s.proof_id.clone(),
                             pointer: _pointer_id.clone(),
                             amount: amount + _s.amount,
-                            ergo_block: ergo_block.unwrap_or(0)
+                            ergo_block: ergo_block.unwrap_or(0)  // TODO How many amount was added or transfered from this proof_id-pointer pair.
                         })
                         .await.expect(DB_ERROR_MSG);
 
