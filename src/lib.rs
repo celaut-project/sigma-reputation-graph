@@ -72,6 +72,7 @@ fn spend<'p>(py: Python<'p>, proof_id: &PyString, amount: i64, pointer: Option<&
             Some(p) => Some(p.to_string()),
             None => None
         },
+        None,
         generate(match database_file {
             Some(s) => Some(s.to_string()),
             None => None

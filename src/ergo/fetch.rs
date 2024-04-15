@@ -1,7 +1,7 @@
 use serde_json::json;
 use std::error::Error;
 
-use crate::database::generate::{generate, DatabaseAsync};
+use crate::database::generate::generate;
 use crate::database::spend::store_on_db;
 use crate::ergo::box_vector::Root;
 
@@ -69,6 +69,7 @@ pub fn fetch_proofs(database_file: Option<String>) {
                                             },
                                         None => None
                                     },
+                                    Some(0),
                                     generate(database_file.clone())
                                 ) {
                                     Ok(result) => println!("ELEMENTO ESTABLECIDO CON EXITO {:?}", result),

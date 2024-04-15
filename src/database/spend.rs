@@ -3,8 +3,11 @@ use surrealdb::sql::Thing;
 use crate::database::generate::DatabaseAsync;
 use crate::database::global::{*};
 
+/*
+If the data originates from the Ergo platform, the corresponding block number is added; otherwise, a value of zero is recorded.
+*/
 #[tokio::main]
-pub async fn store_on_db(proof_id: Option<String>, amount: i64, pointer: Option<String>, database: DatabaseAsync)
+pub async fn store_on_db(proof_id: Option<String>, amount: i64, pointer: Option<String>, ergo_block: Option<u64>, database: DatabaseAsync)
     -> Result<String, Error>
 {
     match database.await {
@@ -31,7 +34,8 @@ pub async fn store_on_db(proof_id: Option<String>, amount: i64, pointer: Option<
                         .content(RPBoxDB {
                             proof_id: _s.proof_id.clone(),
                             pointer: _pointer_id.clone(),
-                            amount: amount + _s.amount
+                            amount: amount + _s.amount,
+                            ergo_block: ergo_block.unwrap_or(0)
                         })
                         .await.expect(DB_ERROR_MSG);
 
@@ -43,7 +47,8 @@ pub async fn store_on_db(proof_id: Option<String>, amount: i64, pointer: Option<
                         .content(RPBoxDB {
                             proof_id: _proof_id.clone(),
                             pointer: _pointer_id.clone(),
-                            amount  // TODO could check that amount <= proof->amount
+                            amount,  // TODO could check that amount <= proof->amount
+                            ergo_block: ergo_block.unwrap_or(0)
                         })
                         .await.expect(DB_ERROR_MSG);
 
