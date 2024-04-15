@@ -4,13 +4,13 @@ use std::collections::HashMap;
 // Define the root structure that holds everything.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Root {
-    items: Vec<BoxItem>,
+    pub items: Vec<BoxItem>,
     total: usize,
 }
 
 
 #[derive(Serialize, Deserialize, Debug)]
-struct BoxItem {
+pub struct BoxItem {
     #[serde(rename = "boxId")]
     box_id: Option<String>,
     #[serde(rename = "transactionId")]
@@ -32,9 +32,10 @@ struct BoxItem {
     #[serde(rename = "ergoTreeScript")]
     ergo_tree_script: Option<String>,
     address: Option<String>,
-    assets: Option<Vec<Asset>>,
+    pub assets: Option<Vec<Asset>>,
     #[serde(rename = "additionalRegisters")]
-    additional_registers: Option<HashMap<String, AdditionalRegister>>,
+    pub additional_registers: Option<HashMap<
+            String, AdditionalRegister>>,
     #[serde(rename = "spentTransactionId")]
     spent_transaction_id: Option<String>,
     #[serde(rename = "mainChain")]
@@ -42,23 +43,23 @@ struct BoxItem {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Asset {
+pub struct Asset {
     #[serde(rename = "tokenId")]
-    token_id: Option<String>,
-    index: Option<usize>,
-    amount: Option<u64>,
-    name: Option<String>,
-    decimals: Option<u8>,
+    pub token_id: Option<String>,
+    pub index: Option<usize>,
+    pub amount: Option<u64>,
+    pub name: Option<String>,
+    pub decimals: Option<u8>,
     #[serde(rename = "type")]
-    asset_type: Option<String>,
+    pub asset_type: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct AdditionalRegister {
+pub struct AdditionalRegister {
     #[serde(rename = "serializedValue")]
     serialized_value: Option<String>,
     #[serde(rename = "sigmaType")]
     sigma_type: Option<String>,
     #[serde(rename = "renderedValue")]
-    rendered_value: Option<String>,
+    pub rendered_value: Option<String>,
 }

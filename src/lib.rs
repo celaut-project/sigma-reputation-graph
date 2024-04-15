@@ -28,11 +28,16 @@ with the DB, but in isolation for each call).
 */
 #[cfg(feature = "pyo3-bindings")]
 #[pyfunction]
-#[pyo3(signature = ())]
-fn fetch<'p>(py: Python<'p>)
+#[pyo3(signature = (database_file))]
+fn fetch<'p>(py: Python<'p>, database_file: Option<&PyString>)
 {
     use ergo::fetch::fetch_proofs;
-    fetch_proofs()
+    fetch_proofs(
+        match database_file {
+            Some(s) => Some(s.to_string()),
+            None => None
+        }
+    )
 }
 
 

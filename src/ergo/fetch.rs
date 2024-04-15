@@ -1,6 +1,8 @@
 use serde_json::json;
 use std::error::Error;
 
+use crate::database::generate::{generate, DatabaseAsync};
+use crate::database::spend::store_on_db;
 use crate::ergo::box_vector::Root;
 
 use super::contract::ProofContract;
@@ -19,7 +21,7 @@ fn fetch_sync(ergo_tree_template_hash: &str, reputation_token_label: &str, walle
     }))
 }
 
-pub fn fetch_proofs() {
+pub fn fetch_proofs(database_file: Option<String>) {
     let contract = ProofContract::new();
     let contract: String = match contract {
         Ok(contract) => {
@@ -45,6 +47,40 @@ pub fn fetch_proofs() {
                 Ok(parsed_data) => {
                     // Now you can work with the parsed_data object in Rust.
                     println!("  parsed value  {:#?}", parsed_data);
+
+                    parsed_data.items.iter().for_each(|box_item| {
+
+                        match &box_item.assets {
+                            Some(assets) if !assets.is_empty() => {
+                                // Extract the first asset
+                                let asset = &assets[0];
+
+                                match store_on_db(
+                                    asset.token_id.clone(),
+                                    match asset.amount {
+                                        Some(value) => value as i64,
+                                        None => 0,
+                                    },
+                                    match &box_item.additional_registers {
+                                        Some(p) => 
+                                            match p.get("R6") {
+                                                Some(register) => register.rendered_value.clone(),
+                                                None => None 
+                                            },
+                                        None => None
+                                    },
+                                    generate(database_file.clone())
+                                ) {
+                                    Ok(result) => println!("ELEMENTO ESTABLECIDO CON EXITO {:?}", result),
+                                    Err(_) => println!("Error en box item.")
+                                }
+                            }
+                            _ => {
+                                // No assets or assets is empty, so we skip to the next box_item
+                                println!("No assets found for this box_item, skipping to next.");
+                            }
+                        };
+                    });
                 },
                 Err(e) => {
                     // Handle the error, e.g., by logging it or displaying a message to the user.

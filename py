@@ -101,10 +101,10 @@ if args.test:
               f"\n          SCORE -> {proof_number/mean(times)}.")
 
     os.system("rm -rf reputation.db")
-    fetch()
+    fetch(None)
     # simple_test()
     # performance_test()
-    os.system("rm -rf reputation.db")
+    # os.system("rm -rf reputation.db")
     print("\n\nTests Ok!")
 
 print("\nEnd.")
