@@ -56,29 +56,22 @@ impl ExplorerApi {
     }
 
     // POST /api/v1/boxes/unspend/search/{...}
-    pub fn get_unspend_boxes_search(&self, json: Value) -> Result<String, Box<dyn Error>> {
+    pub fn get_unspend_boxes_search(&self, json: Value) -> Result<String, ExplorerApiError> {
         println!("json -> {:?}", json);
         let runtime = tokio::runtime::Runtime::new()?;
         let response = runtime.block_on(async {
             let client = reqwest::Client::new();
-            let response = client
+            let resp = client
                 .post(format!("{}/api/v1/boxes/unspent/search", self.url))
                 .json(&json)
                 .send()
-                .await;
+                .await?;
     
-            match response {
-                Ok(resp) => {
-                    if resp.status().is_success() {
-                        resp.text().await.map_err(|e| e.into())
-                    } else {
-                        let error_message = format!("Error: {}", resp.status());
-                        Err(Box::new(io::Error::new(ErrorKind::Other, error_message)) as Box<dyn Error>)
-                    }
-                },
-                Err(e) => {
-                    Err(Box::new(e) as Box<dyn Error>)
-                }
+            if resp.status().is_success() {
+                resp.text().await.map_err(ExplorerApiError::from)
+            } else {
+                let error_message = format!("Error: {}", resp.status());
+                Err(io::Error::new(io::ErrorKind::Other, error_message).into())
             }
         })?;
         Ok(response)

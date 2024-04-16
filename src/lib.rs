@@ -2,6 +2,8 @@ use database::load::load_from_db;
 use crate::database::spend::store_on_db;
 use crate::database::generate::generate;
 use proof::pointer_box::Pointer;
+use crate::ergo::submit::{submit_proofs, SubmitError};
+use crate::ergo::fetch::{fetch_proofs, FetchError};
 
 #[cfg(feature = "pyo3-bindings")]
 use pyo3::prelude::*;
@@ -30,14 +32,18 @@ with the DB, but in isolation for each call).
 #[pyfunction]
 #[pyo3(signature = (database_file))]
 fn fetch<'p>(py: Python<'p>, database_file: Option<&PyString>)
+    -> Result<&'p PyString, FetchError>
 {
-    use ergo::fetch::fetch_proofs;
-    fetch_proofs(
+
+    match fetch_proofs(
         match database_file {
             Some(s) => Some(s.to_string()),
             None => None
         }
-    )
+    ) {
+        Ok(result) => Ok(PyString::new(py, &result)),
+        Err(err) => Err(err)
+    }
 }
 
 
@@ -45,8 +51,12 @@ fn fetch<'p>(py: Python<'p>, database_file: Option<&PyString>)
 #[pyfunction]
 #[pyo3(signature = ())]
 fn submit<'p>(py: Python<'p>)
+    -> Result<&'p PyString, SubmitError>
 {
-    unimplemented!()
+    match submit_proofs() {
+        Ok(result) => Ok(PyString::new(py, &result)),
+        Err(error) => Err(error)
+    }
 }
 
 /**

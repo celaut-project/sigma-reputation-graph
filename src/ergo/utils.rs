@@ -1,30 +1,31 @@
 use std::fmt;
-use std::error::Error;
+use thiserror::Error;
 use ergo_lib::ergotree_ir::base16_str::Base16Str;
 use ergo_lib::ergotree_ir::chain::address::{AddressEncoder, NetworkPrefix};
 use ergo_lib::ergotree_ir::serialization::SigmaSerializable;
-use crate::ergo::decoder::vec_u8_to_vec_i8;
 use ergo_lib::ergotree_ir::mir::value::NativeColl;
 use ergo_lib::ergotree_ir::types::stype::SType;
 use ergo_lib::ergotree_ir::mir::constant::{Constant, Literal};
 use ergo_lib::ergotree_ir::mir::value::CollKind;
+use ergo_lib::ergotree_ir::serialization::SigmaSerializationError;
+use ergo_lib::ergotree_ir::chain::address::AddressEncoderError;
+use ergo_lib::ergotree_ir::serialization::SigmaParsingError;
+use crate::ergo::decoder::vec_u8_to_vec_i8;
 
-// Define a custom error type for the function.
-#[derive(Debug)]
-enum GroupElementError {
+#[derive(Debug, Error)]
+pub enum UtilError {
+    #[error("Input too short")]
     InputTooShort,
-}
 
-// Implement the Display trait for GroupElementError.
-impl fmt::Display for GroupElementError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            GroupElementError::InputTooShort => write!(f, "input vector must have at least three bytes"),
-        }
-    }
-}
+    #[error("Sigma serialization error")]
+    SigmaSerializationError(#[from] SigmaSerializationError),
 
-impl Error for GroupElementError {}
+    #[error("Sigma parsing error")]
+    SigmaParsingError(#[from] SigmaParsingError),
+
+    #[error("Address encoder error")]
+    AddressEncoderError(#[from] AddressEncoderError),
+}
 
 /**
  * Converts a given byte vector to a new byte vector representing a group element.
@@ -47,11 +48,11 @@ impl Error for GroupElementError {}
  * - `Ok`: A new byte vector with the byte `0x07` prepended after removing the first three bytes.
  * - `Err`: A `GroupElementError` indicating that the input vector is too short.
  */
-fn script_to_group_element(b: Vec<u8>) -> Result<Vec<u8>, GroupElementError> {
+fn script_to_group_element(b: Vec<u8>) -> Result<Vec<u8>, UtilError> {
     // Check if the input vector has at least three bytes to remove.
     // If not, return an error.
     if b.len() < 3 {
-        return Err(GroupElementError::InputTooShort);
+        return Err(UtilError::InputTooShort);
     }
 
     // Create a new Vec with the capacity for the original length minus 3 (bytes removed) plus 1 (byte added).
@@ -69,7 +70,7 @@ fn script_to_group_element(b: Vec<u8>) -> Result<Vec<u8>, GroupElementError> {
     Ok(new_vec)
 }
 
-pub fn generate_pk_proposition(base58_wallet_pk: &str) -> Result<String, anyhow::Error> {
+pub fn generate_pk_proposition(base58_wallet_pk: &str) -> Result<String, UtilError> {
 
     let network_prefix = NetworkPrefix::Testnet;
     let encoder = AddressEncoder::new(network_prefix);
@@ -90,21 +91,18 @@ pub fn generate_pk_proposition(base58_wallet_pk: &str) -> Result<String, anyhow:
 }
 
 // Serialize a string to a format suitable for rendering
-fn string_to_serialized(value: &str) -> anyhow::Result<String> { // COMPLETE
+fn string_to_serialized(value: &str) -> Result<String, UtilError> {
     let bytes = vec_u8_to_vec_i8(value.as_bytes().to_vec());
-
     let constant = Constant {
         tpe: SType::SColl(Box::new(SType::SByte)),
         v: Literal::Coll(CollKind::NativeColl(NativeColl::CollByte(bytes)))
     };
-
-    let base16_encoded = constant.base16_str().map_err(anyhow::Error::from)?;
-
+    let base16_encoded = constant.base16_str()?;
     Ok(base16_encoded)
 }
 
 // Convert a serialized value to a rendered string
-pub fn serialized_to_rendered(serialized_value: &str) -> String { // COMPLETE
+pub fn serialized_to_rendered(serialized_value: &str) -> String {
     let pattern_to_strip = "0e";
     let result = if serialized_value.starts_with(pattern_to_strip) {
         // Remove the pattern
@@ -117,6 +115,6 @@ pub fn serialized_to_rendered(serialized_value: &str) -> String { // COMPLETE
 }
 
 // Convert a string to a rendered string
-pub fn string_to_rendered(value: &str) -> anyhow::Result<String> {  // COMPLETE
+pub fn string_to_rendered(value: &str) -> Result<String, UtilError> {
     Ok(serialized_to_rendered(&string_to_serialized(value)?))
 }
