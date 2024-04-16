@@ -102,9 +102,9 @@ if args.test:
 
     os.system("rm -rf reputation.db")
     fetch(None)
-    # simple_test()
-    # performance_test()
-    # os.system("rm -rf reputation.db")
+    simple_test()
+    performance_test()
+    os.system("rm -rf reputation.db")
     print("\n\nTests Ok!")
 
 print("\nEnd.")

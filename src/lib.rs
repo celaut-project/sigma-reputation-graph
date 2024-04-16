@@ -1,5 +1,5 @@
 use database::load::{load_from_db, LoadError};
-use crate::database::spend::store_on_db;
+use crate::database::spend::{store_on_db, SpendError};
 use crate::database::generate::generate;
 use proof::pointer_box::Pointer;
 use crate::ergo::submit::{submit_proofs, SubmitError};
@@ -77,7 +77,7 @@ The pointer box parameter must be on-chain.
 #[pyfunction]
 #[pyo3(signature = (proof_id, amount, pointer, database_file))]
 fn spend<'p>(py: Python<'p>, proof_id: &PyString, amount: i64, pointer: Option<&PyString>, database_file: Option<&PyString>)   // TODO surreal_id can be None
-   -> Result<&'p PyString, std::io::Error>
+   -> Result<&'p PyString, SpendError>
 {
     match store_on_db(
         if proof_id.len().unwrap() == 0 { None }

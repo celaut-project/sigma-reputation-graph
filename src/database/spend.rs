@@ -1,13 +1,28 @@
-use std::io::Error;
 use surrealdb::sql::Thing;
 use crate::database::generate::DatabaseAsync;
 use crate::database::global::{*};
+use pyo3::prelude::*;
+use pyo3::exceptions::PyValueError;
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum SpendError {
+    #[error("IO error on loading module")]
+    IOError(#[from] std::io::Error)
+}
+
+impl From<SpendError> for PyErr {
+    fn from(err: SpendError) -> PyErr {
+        PyValueError::new_err(err.to_string())
+    }
+}
+
 /*
 If the data originates from the Ergo platform, the corresponding block number is added; otherwise, a value of zero is recorded.
 */
 #[tokio::main]
 pub async fn store_on_db(proof_id: Option<String>, amount: i64, pointer: Option<String>, ergo_block: Option<usize>, database: DatabaseAsync)
-    -> Result<String, Error>
+    -> Result<String, SpendError>
 {
     match database.await {
         Ok(db) => { 
@@ -60,6 +75,6 @@ pub async fn store_on_db(proof_id: Option<String>, amount: i64, pointer: Option<
 
             Ok(String::from(""))
         },
-        Err(err) => Err(err)
+        Err(err) => Err(SpendError::IOError(err))
     }
 }
