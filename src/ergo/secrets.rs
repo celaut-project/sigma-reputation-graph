@@ -7,8 +7,8 @@ pub struct Secrets {
 impl Default for Secrets {
     fn default() -> Self {
         Secrets {
-            node_api_key: String::new(), // String vacío como valor por defecto
-            wallet_password: None, // None es el valor por defecto para Option
+            node_api_key: String::new(),
+            wallet_password: None,
         }
     }
 }
