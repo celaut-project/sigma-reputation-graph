@@ -2,7 +2,6 @@ use std::io::Error;
 use surrealdb::sql::Thing;
 use crate::database::generate::DatabaseAsync;
 use crate::database::global::{*};
-
 /*
 If the data originates from the Ergo platform, the corresponding block number is added; otherwise, a value of zero is recorded.
 */
@@ -34,7 +33,10 @@ pub async fn store_on_db(proof_id: Option<String>, amount: i64, pointer: Option<
                         .content(RPBoxDB {
                             proof_id: _s.proof_id.clone(),
                             pointer: _pointer_id.clone(),
-                            amount: amount + _s.amount,
+                            amount: match &ergo_block {
+                                Some(_) => amount,
+                                None => _s.amount + amount,
+                            },
                             ergo_block: ergo_block.unwrap_or(0)  // TODO How many amount was added or transfered from this proof_id-pointer pair.
                         })
                         .await.expect(DB_ERROR_MSG);
