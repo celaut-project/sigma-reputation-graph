@@ -1,11 +1,16 @@
 use thiserror::Error;
 use pyo3::prelude::*;
 use pyo3::exceptions::PyValueError;
+use crate::database::generate::generate;
+use crate::database::load::{load_from_db, LoadError};
 
 #[derive(Error, Debug)]
 pub enum SubmitError {
     #[error("unknown data store error")]
     Unknown,
+
+    #[error("error loading proofs from database")]
+    DatabaseLoadingError(#[from] LoadError)
 }
 
 impl From<SubmitError> for PyErr {
@@ -41,8 +46,10 @@ impl From<SubmitError> for PyErr {
  * For the time being, the function focuses on the simplest implementation, sending each proof
  * individually, to avoid the complexity of bundling multiple proofs into a single transaction.
  */
-pub fn submit_proofs() -> Result<String, SubmitError> {
+pub fn submit_proofs(database_file: Option<String>) -> Result<String, SubmitError> {
     // 1. Read proofs.
+    let proof = load_from_db(None, generate(database_file.clone()))?;
+
     // 2. Build and submit transaction.
     Ok("".to_string())
 }

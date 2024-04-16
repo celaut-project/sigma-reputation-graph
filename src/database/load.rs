@@ -1,17 +1,29 @@
 use std::future::Future;
-use std::io::Error;
+use thiserror::Error;
 use std::pin::Pin;
 use surrealdb::engine::local::Db;
 use surrealdb::Surreal;
+use pyo3::prelude::*;
+use pyo3::exceptions::PyValueError;
 
 use crate::database::generate::DatabaseAsync;
 use crate::database::global::{*};
 use crate::proof::reputation_proof::ReputationProof;
 use crate::proof::pointer_box::{Pointer, PointerBox};
 
+#[derive(Error, Debug)]
+pub enum LoadError {
+    #[error("IO error on loading module")]
+    IOError(#[from] std::io::Error)
+}
 
+impl From<LoadError> for PyErr {
+    fn from(err: LoadError) -> PyErr {
+        PyValueError::new_err(err.to_string())
+    }
+}
 
-fn recursive(proof_id: Option<String>, db: Surreal<Db>) -> Pin<Box<dyn Future<Output = Result<ReputationProof, Error>>>>
+fn recursive(proof_id: Option<String>, db: Surreal<Db>) -> Pin<Box<dyn Future<Output = Result<ReputationProof, LoadError>>>>
 {
     //  Why Box::pin? ->  https://doc.rust-lang.org/error_codes/E0733.html
     Box::pin(async move {
@@ -70,7 +82,7 @@ fn recursive(proof_id: Option<String>, db: Surreal<Db>) -> Pin<Box<dyn Future<Ou
 }
 
 #[tokio::main]
-pub async fn load_from_db(proof_id: Option<String>, database: DatabaseAsync) -> Result<ReputationProof, Error>
+pub async fn load_from_db(proof_id: Option<String>, database: DatabaseAsync) -> Result<ReputationProof, LoadError>
 {
     match database.await {
         Ok(db) => {
@@ -79,6 +91,6 @@ pub async fn load_from_db(proof_id: Option<String>, database: DatabaseAsync) -> 
                 Err(err) => Err(err)
             }
         },
-        Err(err) => Err(err)
+        Err(err) => Err(LoadError::IOError(err))
     }
 }

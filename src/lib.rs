@@ -1,4 +1,4 @@
-use database::load::load_from_db;
+use database::load::{load_from_db, LoadError};
 use crate::database::spend::store_on_db;
 use crate::database::generate::generate;
 use proof::pointer_box::Pointer;
@@ -49,11 +49,16 @@ fn fetch<'p>(py: Python<'p>, database_file: Option<&PyString>)
 
 #[cfg(feature = "pyo3-bindings")]
 #[pyfunction]
-#[pyo3(signature = ())]
-fn submit<'p>(py: Python<'p>)
+#[pyo3(signature = (database_file))]
+fn submit<'p>(py: Python<'p>, database_file: Option<&PyString>)
     -> Result<&'p PyString, SubmitError>
 {
-    match submit_proofs() {
+    match submit_proofs(
+        match database_file {
+            Some(s) => Some(s.to_string()),
+            None => None
+        }
+    ) {
         Ok(result) => Ok(PyString::new(py, &result)),
         Err(error) => Err(error)
     }
@@ -103,7 +108,7 @@ Params
 #[pyfunction]
 #[pyo3(signature = (root_proof_id, pointer, database_file))]
 fn compute<'p>(py: Python<'p>, root_proof_id: Option<&PyString>, pointer: &PyString, database_file: Option<&PyString>)
-    -> Result<&'p PyFloat, std::io::Error>
+    -> Result<&'p PyFloat, LoadError>
 {
     // Reads data from DB and load all the struct on memory.
     match load_from_db(
