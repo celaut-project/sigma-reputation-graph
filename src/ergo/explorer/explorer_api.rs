@@ -57,7 +57,6 @@ impl ExplorerApi {
 
     // POST /api/v1/boxes/unspend/search/{...}
     pub fn get_unspend_boxes_search(&self, json: Value) -> Result<String, ExplorerApiError> {
-        println!("json -> {:?}", json);
         let runtime = tokio::runtime::Runtime::new()?;
         let response = runtime.block_on(async {
             let client = reqwest::Client::new();
