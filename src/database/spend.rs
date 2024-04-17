@@ -52,7 +52,7 @@ pub async fn store_on_db(proof_id: Option<String>, amount: i64, pointer: Option<
                                 Some(_) => amount,
                                 None => _s.amount + amount,
                             },
-                            ergo_block: ergo_block.unwrap_or(0)  // TODO How many amount was added or transfered from this proof_id-pointer pair.
+                            ergo_block: Some(ergo_block.unwrap_or(0))
                         })
                         .await.expect(DB_ERROR_MSG);
 
@@ -65,7 +65,7 @@ pub async fn store_on_db(proof_id: Option<String>, amount: i64, pointer: Option<
                             proof_id: _proof_id.clone(),
                             pointer: _pointer_id.clone(),
                             amount,  // TODO could check that amount <= proof->amount
-                            ergo_block: ergo_block.unwrap_or(0)
+                            ergo_block: Some(ergo_block.unwrap_or(0))
                         })
                         .await.expect(DB_ERROR_MSG);
 

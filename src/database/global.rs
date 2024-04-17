@@ -15,7 +15,7 @@ pub(crate) struct RPBoxDB {
     pub(crate) proof_id: String,
     pub(crate) pointer: String,
     pub(crate) amount: i64,
-    pub(crate) ergo_block: usize
+    pub(crate) ergo_block: Option<usize>
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -24,7 +24,7 @@ pub(crate) struct RPBoxDBWithId {
     pub(crate) proof_id: String,
     pub(crate) pointer: String,
     pub(crate) amount: i64,
-    pub(crate) ergo_block: usize
+    pub(crate) ergo_block: Option<usize>
 }
 
 #[derive(Debug, Deserialize)]
