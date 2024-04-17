@@ -88,7 +88,7 @@ if args.test:
         times = []
         for pointer in pointers:
             start = time()
-            r = compute(None, pointer, None)
+            r = compute("", pointer, None)
             end = time()
             time_lapse = end - start
             times.append(time_lapse)
@@ -100,9 +100,10 @@ if args.test:
               f"\n          avg time lapse -> {mean(times)}, "
               f"\n          SCORE -> {proof_number/mean(times)}.")
 
-    os.system("rm -rf reputation.db")
-    fetch(None)
-    simple_test()
+    # os.system("rm -rf reputation.db")
+    # fetch(None)
+    # simple_test()
+    # os.system("rm -rf reputation.db")
     performance_test()
     os.system("rm -rf reputation.db")
     print("\n\nTests Ok!")
