@@ -36,7 +36,7 @@ fn recursive(proof_id: Option<String>, db: Surreal<Db>) -> Pin<Box<dyn Future<Ou
         
         let mut proof = {
             ReputationProof::create(
-                Vec::new(),
+                _proof_id.clone().into_bytes(),
                 {
                     let r: Vec<i64> =
                         db.query(&format!("SELECT math::sum(amount) AS value FROM {} WHERE proof_id=$proof_id GROUP ALL", RESOURCE))

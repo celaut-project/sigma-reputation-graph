@@ -28,7 +28,7 @@ if args.build:
     print("Build Ok!")
 
 if args.test:
-    from sigma_reputation_graph import spend, compute, fetch
+    from sigma_reputation_graph import spend, compute, fetch, submit
 
     def simple_test():
         print("\n\nSimple test")
@@ -102,10 +102,10 @@ if args.test:
 
     os.system("rm -rf reputation.db")
     fetch(None)
-    simple_test()
+    # simple_test()
+    # performance_test()
+    # print("\n\nTests Ok!")
+    submit(None)
     os.system("rm -rf reputation.db")
-    performance_test()
-    os.system("rm -rf reputation.db")
-    print("\n\nTests Ok!")
 
 print("\nEnd.")

@@ -47,9 +47,10 @@ impl From<SubmitError> for PyErr {
  * individually, to avoid the complexity of bundling multiple proofs into a single transaction.
  */
 pub fn submit_proofs(database_file: Option<String>) -> Result<String, SubmitError> {
-    // 1. Read proofs.
-    let proof = load_from_db(None, generate(database_file.clone()))?;
+    let proof = "4b14d26234bfd7e0dc37148ced29e3410eadf3c9c22787e79d310c5de91bd833".to_string();
+    let proof = load_from_db(Some(proof), generate(database_file.clone()))?;
+    println!("Proof -> {:?}", proof);
+    println!("Id of the proof -> {:?}", String::from_utf8(proof.token_id));
 
-    // 2. Build and submit transaction.
     Ok("".to_string())
 }

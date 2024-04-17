@@ -5,7 +5,7 @@ use super::pointer_box::Pointer;
 
 #[derive(Clone)]
 pub struct ReputationProof {
-    token_id: Vec<u8>,
+    pub(crate) token_id: Vec<u8>,
     pub(crate) total_amount: i64,
     pub(crate) outputs: Vec<PointerBox>,
 }
