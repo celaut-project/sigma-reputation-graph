@@ -100,8 +100,8 @@ if args.test:
               f"\n          avg time lapse -> {mean(times)}, "
               f"\n          SCORE -> {proof_number/mean(times)}.")
 
-    os.system("rm -rf reputation.db")
-    fetch(None)
+    # os.system("rm -rf reputation.db")
+    # fetch(None)
     # simple_test()
     # performance_test()
     # print("\n\nTests Ok!")

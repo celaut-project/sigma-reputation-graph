@@ -1,3 +1,4 @@
+use ergo_node_interface::NodeInterface;
 use thiserror::Error;
 use pyo3::prelude::*;
 use pyo3::exceptions::PyValueError;
@@ -10,7 +11,10 @@ pub enum SubmitError {
     Unknown,
 
     #[error("error loading proofs from database")]
-    DatabaseLoadingError(#[from] LoadError)
+    DatabaseLoadingError(#[from] LoadError),
+
+    #[error("error from node")]
+    NodeError
 }
 
 impl From<SubmitError> for PyErr {
@@ -47,10 +51,19 @@ impl From<SubmitError> for PyErr {
  * individually, to avoid the complexity of bundling multiple proofs into a single transaction.
  */
 pub fn submit_proofs(database_file: Option<String>) -> Result<String, SubmitError> {
-    let proof = "4b14d26234bfd7e0dc37148ced29e3410eadf3c9c22787e79d310c5de91bd833".to_string();
+    /*let proof = "4b14d26234bfd7e0dc37148ced29e3410eadf3c9c22787e79d310c5de91bd833".to_string();
     let proof = load_from_db(Some(proof), generate(database_file.clone()))?;
     println!("Proof -> {:?}", proof);
-    println!("Id of the proof -> {:?}", String::from_utf8(proof.token_id));
+    println!("Id of the proof -> {:?}", String::from_utf8(proof.token_id)); */
+
+    let node = NodeInterface::new("", "213.239.193.208", "9052");
+    match node {
+        Ok(node) => match node.current_block_height() {
+            Ok(value) => println!("Current height: {}", value),
+            Err(_) => println!("ERROR1")
+        },
+        Err(_) => println!("ERROR2")
+    }
 
     Ok("".to_string())
 }
