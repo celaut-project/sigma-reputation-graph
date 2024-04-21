@@ -2,7 +2,7 @@ use database::load::{load_from_db, LoadError};
 use crate::database::spend::{store_on_db, SpendError};
 use crate::database::generate::generate;
 use proof::pointer_box::Pointer;
-use crate::ergo::submit::{submit_proofs, SubmitError};
+use crate::ergo::submit::submit::{submit_proofs, SubmitTxError};
 use crate::ergo::fetch::{fetch_proofs, FetchError};
 
 #[cfg(feature = "pyo3-bindings")]
@@ -51,7 +51,7 @@ fn fetch<'p>(py: Python<'p>, database_file: Option<&PyString>)
 #[pyfunction]
 #[pyo3(signature = (database_file))]
 fn submit<'p>(py: Python<'p>, database_file: Option<&PyString>)
-    -> Result<&'p PyString, SubmitError>
+    -> Result<&'p PyString, SubmitTxError>
 {
     match submit_proofs(
         match database_file {
