@@ -36,7 +36,7 @@ reqwest = { version = "0.12.3", features = ["json", "blocking"] }
 url = { version = "2.2", features = ["serde"] }
 futures = { version = "0.3.29", optional = true }
 openssl = { version = "0.10", features = ["vendored"], optional = true }
-ergo-lib = { git = "https://github.com/ergoplatform/sigma-rust.git", version = "0.26.0", branch = "master", package = "ergo-lib", features = ["compiler"]}
+ergo-lib = { version = "0.27.1", features = ["compiler"]}
 ergo-node-interface = { git = "https://github.com/ergoplatform/ergo-node-interface-rust.git", version = "0.4.1", branch = "master", package = "ergo-node-interface"}
 hex = "0.4.3"
 log = "0.4.11"
@@ -44,6 +44,7 @@ once_cell = "1.15.0"
 sha2 = "0.10"
 base16 = "0.2.1"
 base64 = "0.22"
+derive_more = "0.99.17"
 
 # Specify WASM dependencies
 [dependencies.wasm-bindgen]
