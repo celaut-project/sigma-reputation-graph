@@ -1,10 +1,10 @@
 use ergo_lib::chain::ergo_box::box_builder::{ErgoBoxCandidateBuilder, ErgoBoxCandidateBuilderError};
 use ergo_lib::chain::transaction::TxIoVec;
-use ergo_lib::ergo_chain_types::DigestNError;
+use ergo_lib::ergo_chain_types::{Digest32, DigestNError};
 use ergo_lib::ergotree_interpreter::sigma_protocol::private_input::PrivateInput;
 use ergo_lib::ergotree_interpreter::sigma_protocol::prover::ContextExtension;
 use ergo_lib::ergotree_ir::chain::address::{AddressEncoder, AddressEncoderError, NetworkPrefix};
-use ergo_lib::ergotree_ir::chain::ergo_box::box_value::BoxValue;
+use ergo_lib::ergotree_ir::chain::ergo_box::box_value::{BoxValue, BoxValueError};
 use ergo_lib::ergotree_ir::chain::ergo_box::ErgoBox;
 use ergo_lib::ergotree_ir::chain::token::{Token, TokenId};
 use ergo_lib::wallet::box_selector::{BoxSelector, BoxSelectorError, SimpleBoxSelector};
@@ -15,6 +15,8 @@ use ergo_node_interface::NodeInterface;
 use thiserror::Error;
 use pyo3::prelude::*;
 use pyo3::exceptions::PyValueError;
+use crate::ergo::explorer::error::ExplorerApiError;
+use crate::ergo::explorer::explorer_api::ExplorerApi;
 use crate::ergo::submit::prover::SigmaProver;
 use crate::database::generate::generate;
 use crate::database::load::{load_from_db, LoadError as DBLoadError};
@@ -27,26 +29,32 @@ pub enum SubmitTxError {
     #[error("unknown data store error")]
     Unknown,
 
-    #[error("error loading proofs from database")]
+    #[error("error loading proofs from database {0}")]
     DatabaseLoadingError(#[from] DBLoadError),
 
-    #[error("tx sign error")]
+    #[error("tx sign error {0}")]
     TxSigningError(#[from] TxSigningError),
 
-    #[error("node error")]
+    #[error("node error {0}")]
     NodeError(#[from] NodeError),
 
-    #[error("digest n error")]
+    #[error("box value error {0}")]
+    BoxValueError(#[from] BoxValueError),
+
+    #[error("digest n error {0}")]
     DigestNError(#[from] DigestNError),
 
     #[error("address encoder error")]
     AddressEncoderError(#[from] AddressEncoderError),
 
-    #[error("ergo box candidate builder error")]
+    #[error("ergo box candidate builder error {0}")]
     ErgoBoxCandidateBuilderError(#[from] ErgoBoxCandidateBuilderError),
 
-    #[error("box selector error")]
+    #[error("box selector error {0}")]
     BoxSelectorError(#[from] BoxSelectorError),
+
+    #[error("Explorer API error {0}")]
+    ExplorerError(#[from] ExplorerApiError),
 }
 
 impl From<SubmitTxError> for PyErr {
@@ -105,7 +113,7 @@ pub fn submit_proofs(database_file: Option<String>) -> Result<String, SubmitTxEr
 
             let network_prefix = NetworkPrefix::Testnet;
             let encoder = AddressEncoder::new(network_prefix);
-            let addr = encoder.parse_address_from_str("4b14d26234bfd7e0dc37148ced29e3410eadf3c9c22787e79d310c5de91bd833")?;
+            let addr = encoder.parse_address_from_str("Ms7smJwLGbUAjuWQ")?;  // example
             let ergo_tree = addr.script().unwrap();
             
             // 1.  Create tx.
@@ -121,9 +129,15 @@ pub fn submit_proofs(database_file: Option<String>) -> Result<String, SubmitTxEr
 
             // Output candidates
 
-            let token_id = TokenId::from_base64("4b14d26234bfd7e0dc37148ced29e3410eadf3c9c22787e79d310c5de91bd833")?;
+            let token_id = TokenId::from(
+                Digest32::try_from(
+                    "c95d7bd2c74986195bcebf516f619167d8235f3ded4260c0e3a7bc5824f72af8"
+                        .to_string()
+                )
+                .unwrap()
+            );
             
-            let mut builder = ErgoBoxCandidateBuilder::new((0 as u64).try_into().unwrap(), ergo_tree.clone(),  block_height.try_into().unwrap());
+            let mut builder = ErgoBoxCandidateBuilder::new(BoxValue::SAFE_USER_MIN, ergo_tree.clone(),  block_height.try_into().unwrap());
             let token = Token {
                 token_id,
                 amount: token_amount,
@@ -132,12 +146,14 @@ pub fn submit_proofs(database_file: Option<String>) -> Result<String, SubmitTxEr
             let output_candidates = vec![builder.build()?];
             let output_candidates = TxIoVec::from_vec(output_candidates.clone()).unwrap();
 
-            
+            println!("ya estan los output candidates");
             // Inputs
             
-            let input_boxes: Vec<ErgoBox> = vec![];
+            let explorer = ExplorerApi::new();
+            let input_boxes: Vec<ErgoBox> = explorer.get_utxos(&addr)?;
             let box_selector = SimpleBoxSelector::new();
             let box_selection = box_selector.select(input_boxes,  BoxValue::SAFE_USER_MIN, vec![].as_slice())?;
+            println!("box selection ok.");
             let inputs = TxIoVec::from_vec(
                 box_selection
                     .boxes

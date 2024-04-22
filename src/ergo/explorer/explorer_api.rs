@@ -1,5 +1,9 @@
 use ergo_lib::chain::transaction::Transaction;
 use ergo_lib::chain::transaction::TxId;
+use ergo_lib::ergotree_ir::chain::address::Address;
+use ergo_lib::ergotree_ir::chain::address::AddressEncoder;
+use ergo_lib::ergotree_ir::chain::address::NetworkPrefix;
+use ergo_lib::ergotree_ir::chain::ergo_box::ErgoBox;
 use reqwest::blocking::RequestBuilder;
 use reqwest::blocking::Response;
 use reqwest::header::CONTENT_TYPE;
@@ -68,6 +72,33 @@ impl ExplorerApi {
     
             if resp.status().is_success() {
                 resp.text().await.map_err(ExplorerApiError::from)
+            } else {
+                let error_message = format!("Error: {}", resp.status());
+                Err(io::Error::new(io::ErrorKind::Other, error_message).into())
+            }
+        })?;
+        Ok(response)
+    }
+
+    pub fn get_utxos(&self, addr: &Address) -> Result<Vec<ErgoBox>, ExplorerApiError> {
+        let runtime = tokio::runtime::Runtime::new()?;
+        let response = runtime.block_on(async {
+            let client = reqwest::Client::new();
+            let resp = client
+                .get( // Cambiado de post a get
+                    &format!(
+                        "{}/api/v1/boxes/unspent/byAddress/{}",
+                        self.url,
+                        AddressEncoder::encode_address_as_string(NetworkPrefix::Testnet, addr),
+                    )
+                )
+                .send()
+                .await?;
+    
+            if resp.status().is_success() {
+                let json_body = resp.text().await?;
+                serde_json::from_str::<Vec<ErgoBox>>(&json_body)
+                    .map_err(ExplorerApiError::from)
             } else {
                 let error_message = format!("Error: {}", resp.status());
                 Err(io::Error::new(io::ErrorKind::Other, error_message).into())
