@@ -86,7 +86,7 @@ impl ExplorerApi {
         Ok(response)
     }
 
-    pub fn get_utxos(&self, addr: &Address) -> Result<Vec<ErgoBox>, ExplorerApiError> {
+    pub fn get_utxos(&self, addr: &Address, net: NetworkPrefix) -> Result<Vec<ErgoBox>, ExplorerApiError> {
         let runtime = tokio::runtime::Runtime::new().map_err(ExplorerApiError::IoError)?;
         let response = runtime.block_on(async {
             let client = reqwest::Client::new();
@@ -95,7 +95,7 @@ impl ExplorerApi {
                     &format!(
                         "{}/api/v1/boxes/unspent/byAddress/{}",
                         self.url,
-                        AddressEncoder::encode_address_as_string(NetworkPrefix::Testnet, addr),
+                        AddressEncoder::encode_address_as_string(net, addr),
                     )
                 )
                 .send()

@@ -87,7 +87,7 @@ pub struct Wallet {
 }
 
 impl Wallet {
-    pub fn try_from_seed(seed: SeedPhrase) -> Option<(Self, Address)> {
+    pub fn try_from_seed(seed: String) -> Option<(Self, Address)> {
         if let Ok(sk) = ExtSecretKey::derive_master(Mnemonic::to_seed(&<String>::from(seed), "")) {
             if let SecretKey::DlogSecretKey(dpi) = sk.secret_key() {
                 let addr = Address::P2Pk(sk.public_image());

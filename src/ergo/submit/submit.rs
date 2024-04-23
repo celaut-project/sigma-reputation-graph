@@ -17,7 +17,7 @@ use pyo3::prelude::*;
 use pyo3::exceptions::PyValueError;
 use crate::ergo::explorer::error::ExplorerApiError;
 use crate::ergo::explorer::explorer_api::ExplorerApi;
-use crate::ergo::submit::prover::SigmaProver;
+use crate::ergo::submit::prover::{SeedPhrase, SigmaProver};
 use crate::database::generate::generate;
 use crate::database::load::{load_from_db, LoadError as DBLoadError};
 use crate::ergo::submit::prover::{get_ergo_state_context, Wallet};
@@ -91,6 +91,11 @@ impl From<SubmitTxError> for PyErr {
  * individually, to avoid the complexity of bundling multiple proofs into a single transaction.
  */
 pub fn submit_proofs(database_file: Option<String>) -> Result<String, SubmitTxError> {
+    let token_id_str = "c95d7bd2c74986195bcebf516f619167d8235f3ded4260c0e3a7bc5824f72af8";
+
+    let seed = "income chaos lunar arrive because jazz tomato burst stock stay hold velvet network weekend invite".to_string();
+    let (prover, addr) = Wallet::try_from_seed(seed).expect("Invalid seed");
+
     let proof = "4b14d26234bfd7e0dc37148ced29e3410eadf3c9c22787e79d310c5de91bd833".to_string();
     let proof = load_from_db(Some(proof), generate(database_file.clone()))?;
     println!("Id of the proof -> {:?}", String::from_utf8(proof.token_id));
@@ -108,48 +113,47 @@ pub fn submit_proofs(database_file: Option<String>) -> Result<String, SubmitTxEr
                     0
                 }
             };
-            let token_amount = 100.try_into().unwrap();
 
-            let network_prefix = NetworkPrefix::Testnet;
-            let encoder = AddressEncoder::new(network_prefix);
-            let addr = encoder.parse_address_from_str("Ms7smJwLGbUAjuWQ")?;  // example
             let ergo_tree = addr.script().unwrap();
-            
-            // 1.  Create tx.
-            let secret_key = SecretKey::random_dlog();
-            let address = secret_key.get_address_from_public_image();
 
-            let ergo_state_context = get_ergo_state_context();
-            
-            let prover = Wallet {
-                secrets: vec![PrivateInput::from(secret_key)],
-                ergo_state_context,
-            };
-
-            // Output candidates
-            let token_id = TokenId::from(
-                Digest32::try_from(
-                    "c95d7bd2c74986195bcebf516f619167d8235f3ded4260c0e3a7bc5824f72af8"
-                        .to_string()
-                )
-                .unwrap()
-            );
-            
-            let mut builder = ErgoBoxCandidateBuilder::new(BoxValue::SAFE_USER_MIN, ergo_tree.clone(),  block_height.try_into().unwrap());
-            let token = Token {
-                token_id,
-                amount: token_amount,
-            };
-            builder.mint_token(token.clone(), "".into(), "".into(), 0);
-            let output_candidates = vec![builder.build()?];
-            let output_candidates = TxIoVec::from_vec(output_candidates.clone()).unwrap();
-
-            // Inputs
+            // Selector
             let explorer = ExplorerApi::new();
-            let input_boxes: Vec<ErgoBox> = explorer.get_utxos(&addr)?;
+            println!(
+                "Wallet address: {:?}",
+                AddressEncoder::encode_address_as_string(NetworkPrefix::Testnet, &addr)  // 3WvdKWY5dHf4zMPHWTjWKvF7BwpzNJzC72HPKCWwLcde6TdK9ht2
+            );
+            let input_boxes: Vec<ErgoBox> = explorer.get_utxos(&addr, NetworkPrefix::Testnet)?;
+            println!("inputs -> {:?}", input_boxes);
             let box_selector = SimpleBoxSelector::new();
             let box_selection = box_selector.select(input_boxes,  BoxValue::SAFE_USER_MIN, vec![].as_slice())?;
 
+            println!("box selection -> {:?}", box_selection);
+
+            // Output candidates
+            let mut output = ErgoBoxCandidateBuilder::new(BoxValue::SAFE_USER_MIN, ergo_tree.clone(),  block_height.try_into().unwrap());
+
+            if (true) {  // If must mint.
+                let token = Token {
+                    token_id: box_selection.boxes.first().box_id().into(),
+                    amount: 100.try_into().unwrap(),
+                };
+                
+                output.mint_token(token.clone(), "".into(), "".into(), 0);
+
+            } else {
+                let token_id = TokenId::from(
+                    Digest32::try_from(token_id_str.to_string()).unwrap()
+                );
+                output.add_token(Token {
+                    token_id: token_id,
+                    amount: 100.try_into().unwrap(),
+                });
+            }
+
+            let output_candidates = vec![output.build()?];
+            let output_candidates = TxIoVec::from_vec(output_candidates.clone()).unwrap();
+
+            // Inputs
             let inputs = TxIoVec::from_vec(
                 box_selection
                     .boxes
@@ -165,6 +169,7 @@ pub fn submit_proofs(database_file: Option<String>) -> Result<String, SubmitTxEr
                 output_candidates
             };
 
+            // Sign
             let signed_tx = prover.sign(tx)?;
 
             // 2. Submit tx.
