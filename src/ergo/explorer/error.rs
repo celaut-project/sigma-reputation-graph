@@ -9,12 +9,12 @@ pub enum ExplorerApiError {
     RequestError(#[from] ReqwestError),
 
     #[error("serde error: {0}")]
-    SerdeError(#[from] serde_json::Error),
+    JsonError(#[from] serde_json::Error),
     
     #[error("invalid explorer url: {0}")]
     InvalidExplorerUrl(#[from] ParseError),
     
-    #[error("IO error")]
-    IOError(#[from] io::Error),
+    #[error("IO error {0}")]
+    IoError(#[from] io::Error),
 
 }

@@ -17,6 +17,12 @@ use crate::ergo::endpoints::Endpoints;
 
 use super::error::ExplorerApiError;
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Items<A> {
+    items: Vec<A>,
+}
+
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ExplorerApi {
     pub url: url::Url,
@@ -81,11 +87,11 @@ impl ExplorerApi {
     }
 
     pub fn get_utxos(&self, addr: &Address) -> Result<Vec<ErgoBox>, ExplorerApiError> {
-        let runtime = tokio::runtime::Runtime::new()?;
+        let runtime = tokio::runtime::Runtime::new().map_err(ExplorerApiError::IoError)?;
         let response = runtime.block_on(async {
             let client = reqwest::Client::new();
             let resp = client
-                .get( // Cambiado de post a get
+                .get(
                     &format!(
                         "{}/api/v1/boxes/unspent/byAddress/{}",
                         self.url,
@@ -93,17 +99,20 @@ impl ExplorerApi {
                     )
                 )
                 .send()
-                .await?;
+                .await
+                .map_err(ExplorerApiError::RequestError)?;
     
             if resp.status().is_success() {
-                let json_body = resp.text().await?;
-                serde_json::from_str::<Vec<ErgoBox>>(&json_body)
-                    .map_err(ExplorerApiError::from)
+                let json_body = resp.text().await.map_err(ExplorerApiError::RequestError)?;
+                serde_json::from_str::<Items<ErgoBox>>(&json_body)
+                    .map_err(ExplorerApiError::JsonError)
+                    .map(|items| items.items)
             } else {
                 let error_message = format!("Error: {}", resp.status());
-                Err(io::Error::new(io::ErrorKind::Other, error_message).into())
+                Err(ExplorerApiError::IoError(std::io::Error::new(std::io::ErrorKind::Other, error_message)))
             }
         })?;
         Ok(response)
     }
+    
 }

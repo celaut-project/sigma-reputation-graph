@@ -93,7 +93,6 @@ impl From<SubmitTxError> for PyErr {
 pub fn submit_proofs(database_file: Option<String>) -> Result<String, SubmitTxError> {
     let proof = "4b14d26234bfd7e0dc37148ced29e3410eadf3c9c22787e79d310c5de91bd833".to_string();
     let proof = load_from_db(Some(proof), generate(database_file.clone()))?;
-    println!("Proof -> {:?}", proof);
     println!("Id of the proof -> {:?}", String::from_utf8(proof.token_id));
 
     let node = NodeInterface::new("", "213.239.193.208", "9052");
@@ -128,7 +127,6 @@ pub fn submit_proofs(database_file: Option<String>) -> Result<String, SubmitTxEr
             };
 
             // Output candidates
-
             let token_id = TokenId::from(
                 Digest32::try_from(
                     "c95d7bd2c74986195bcebf516f619167d8235f3ded4260c0e3a7bc5824f72af8"
@@ -146,14 +144,12 @@ pub fn submit_proofs(database_file: Option<String>) -> Result<String, SubmitTxEr
             let output_candidates = vec![builder.build()?];
             let output_candidates = TxIoVec::from_vec(output_candidates.clone()).unwrap();
 
-            println!("ya estan los output candidates");
             // Inputs
-            
             let explorer = ExplorerApi::new();
             let input_boxes: Vec<ErgoBox> = explorer.get_utxos(&addr)?;
             let box_selector = SimpleBoxSelector::new();
             let box_selection = box_selector.select(input_boxes,  BoxValue::SAFE_USER_MIN, vec![].as_slice())?;
-            println!("box selection ok.");
+
             let inputs = TxIoVec::from_vec(
                 box_selection
                     .boxes
@@ -162,7 +158,6 @@ pub fn submit_proofs(database_file: Option<String>) -> Result<String, SubmitTxEr
                     .collect::<Vec<_>>(),
             )
             .unwrap();
-
             
             let tx = TransactionCandidate {
                 inputs,

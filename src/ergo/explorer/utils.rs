@@ -36,7 +36,7 @@ pub fn wait_for_txs_confirmation(tx_ids: Vec<TxId>) {
                     log::info!("Transaction found: {tx_id}");
                     remaining_txs.retain(|id| *id != tx_id);
                 }
-                Err(ExplorerApiError::SerdeError(_)) => {
+                Err(ExplorerApiError::JsonError(_)) => {
                     // remove after https://github.com/ergoplatform/explorer-backend/issues/249 is fixed
                     log::info!("Transaction found, but failed to parse: {tx_id}");
                     remaining_txs.retain(|id| *id != tx_id);
