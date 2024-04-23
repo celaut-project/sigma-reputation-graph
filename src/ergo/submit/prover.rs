@@ -1,4 +1,5 @@
 use std::rc::Rc;
+use std::str::FromStr;
 
 use derive_more::{From, Into};
 use ergo_lib::chain::ergo_state_context::ErgoStateContext;
@@ -10,7 +11,8 @@ use ergo_lib::ergotree_interpreter::eval::env::Env;
 use ergo_lib::ergotree_interpreter::sigma_protocol::private_input::{DlogProverInput, PrivateInput};
 use ergo_lib::ergotree_interpreter::sigma_protocol::prover::hint::HintsBag;
 use ergo_lib::ergotree_interpreter::sigma_protocol::prover::{ProofBytes, Prover};
-use ergo_lib::ergotree_ir::chain::address::Address;
+use ergo_lib::ergotree_ir::chain::address::{Address, AddressEncoder, NetworkPrefix};
+use ergo_lib::wallet::derivation_path::{ChildIndex, DerivationPath};
 use ergo_lib::wallet::ext_secret_key::ExtSecretKey;
 use ergo_lib::wallet::mnemonic::Mnemonic;
 use ergo_lib::wallet::secret_key::SecretKey;
@@ -90,7 +92,20 @@ impl Wallet {
     pub fn try_from_seed(seed: String) -> Option<(Self, Address)> {
         if let Ok(sk) = ExtSecretKey::derive_master(Mnemonic::to_seed(&<String>::from(seed), "")) {
             if let SecretKey::DlogSecretKey(dpi) = sk.secret_key() {
+
+
+                /*
+                    TODO The derivation path should be m/44'/429'/0'/0
+                    Based on: https://discord.com/channels/668903786361651200/669989266478202917/1232355179232362566
+                */
+
+                // println!("derivation default path -> {:?}", sk.path().to_string());  // "m/"
                 let addr = Address::P2Pk(sk.public_image());
+                /* println!(
+                    "Wallet address: {:?}",
+                    AddressEncoder::encode_address_as_string(NetworkPrefix::Testnet, &addr)  // 3WvdKWY5dHf4zMPHWTjWKvF7BwpzNJzC72HPKCWwLcde6TdK9ht2
+                );*/ 
+
                 let wallet = Self {
                     secrets: vec![PrivateInput::DlogProverInput(dpi)],
                     ergo_state_context: get_ergo_state_context(),

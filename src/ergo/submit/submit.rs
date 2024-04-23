@@ -8,7 +8,7 @@ use ergo_lib::ergotree_ir::chain::ergo_box::box_value::{BoxValue, BoxValueError}
 use ergo_lib::ergotree_ir::chain::ergo_box::ErgoBox;
 use ergo_lib::ergotree_ir::chain::token::{Token, TokenId};
 use ergo_lib::wallet::box_selector::{BoxSelector, BoxSelectorError, SimpleBoxSelector};
-use ergo_lib::wallet::secret_key::SecretKey;
+use ergo_lib::wallet::miner_fee::MINERS_FEE_ADDRESS;
 use ergo_lib::wallet::signing::TxSigningError;
 use ergo_node_interface::scanning::NodeError;
 use ergo_node_interface::NodeInterface;
@@ -118,19 +118,25 @@ pub fn submit_proofs(database_file: Option<String>) -> Result<String, SubmitTxEr
 
             // Selector
             let explorer = ExplorerApi::new();
-            println!(
-                "Wallet address: {:?}",
-                AddressEncoder::encode_address_as_string(NetworkPrefix::Testnet, &addr)  // 3WvdKWY5dHf4zMPHWTjWKvF7BwpzNJzC72HPKCWwLcde6TdK9ht2
-            );
             let input_boxes: Vec<ErgoBox> = explorer.get_utxos(&addr, NetworkPrefix::Testnet)?;
-            println!("inputs -> {:?}", input_boxes);
             let box_selector = SimpleBoxSelector::new();
             let box_selection = box_selector.select(input_boxes,  BoxValue::SAFE_USER_MIN, vec![].as_slice())?;
 
-            println!("box selection -> {:?}", box_selection);
+            // Inputs
+            let inputs = TxIoVec::from_vec(
+                box_selection
+                    .clone()
+                    .boxes
+                    .into_iter()
+                    .map(|bx| (bx, ContextExtension::empty()))
+                    .collect::<Vec<_>>(),
+            )
+            .unwrap();
+
+            let output_value = BoxValue::new(3000000000 - 1000000)?; // Should be the sum of input values ??
 
             // Output candidates
-            let mut output = ErgoBoxCandidateBuilder::new(BoxValue::SAFE_USER_MIN, ergo_tree.clone(),  block_height.try_into().unwrap());
+            let mut output = ErgoBoxCandidateBuilder::new(output_value, ergo_tree.clone(),  block_height.try_into().unwrap());
 
             if (true) {  // If must mint.
                 let token = Token {
@@ -150,19 +156,12 @@ pub fn submit_proofs(database_file: Option<String>) -> Result<String, SubmitTxEr
                 });
             }
 
-            let output_candidates = vec![output.build()?];
+            let transaction_fee = BoxValue::new(1000000)?;
+            let miner_tree = MINERS_FEE_ADDRESS.script().unwrap();
+            let transaction_fee_box_candidate = ErgoBoxCandidateBuilder::new(transaction_fee, miner_tree.clone(), block_height.try_into().unwrap());
+            let output_candidates = vec![output.build()?, transaction_fee_box_candidate.build()?];
             let output_candidates = TxIoVec::from_vec(output_candidates.clone()).unwrap();
 
-            // Inputs
-            let inputs = TxIoVec::from_vec(
-                box_selection
-                    .boxes
-                    .into_iter()
-                    .map(|bx| (bx, ContextExtension::empty()))
-                    .collect::<Vec<_>>(),
-            )
-            .unwrap();
-            
             let tx = TransactionCandidate {
                 inputs,
                 data_inputs: None,
