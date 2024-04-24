@@ -6,7 +6,7 @@ use ergo_lib::ergotree_interpreter::sigma_protocol::prover::ContextExtension;
 use ergo_lib::ergotree_ir::chain::address::{AddressEncoder, AddressEncoderError, NetworkPrefix};
 use ergo_lib::ergotree_ir::chain::ergo_box::box_value::{BoxValue, BoxValueError};
 use ergo_lib::ergotree_ir::chain::ergo_box::ErgoBox;
-use ergo_lib::ergotree_ir::chain::token::{Token, TokenId};
+use ergo_lib::ergotree_ir::chain::token::{self, Token, TokenAmount, TokenId};
 use ergo_lib::wallet::box_selector::{BoxSelector, BoxSelectorError, SimpleBoxSelector};
 use ergo_lib::wallet::miner_fee::MINERS_FEE_ADDRESS;
 use ergo_lib::wallet::signing::TxSigningError;
@@ -91,14 +91,40 @@ impl From<SubmitTxError> for PyErr {
  * individually, to avoid the complexity of bundling multiple proofs into a single transaction.
  */
 pub fn submit_proofs(database_file: Option<String>) -> Result<String, SubmitTxError> {
-    let token_id_str = "c95d7bd2c74986195bcebf516f619167d8235f3ded4260c0e3a7bc5824f72af8";
+    
     let fee_value = 1000000;
     let seed = "income chaos lunar arrive because jazz tomato burst stock stay hold velvet network weekend invite".to_string();
     let (prover, addr) = Wallet::try_from_seed(seed).expect("Invalid seed");
 
+
+    /*
+        wHAT IS THE TOKEN ID FOR THE PROOFS THAT ARE NOT FETCHED FROM ERGO ??
+     */
     let proof = "4b14d26234bfd7e0dc37148ced29e3410eadf3c9c22787e79d310c5de91bd833".to_string();
     let proof = load_from_db(Some(proof), generate(database_file.clone()))?;
-    println!("Id of the proof -> {:?}", String::from_utf8(proof.token_id));
+
+    let token_id_str = String::from_utf8(proof.token_id).unwrap_or_default();
+    println!("Id of the proof -> {:?}", &token_id_str);
+
+/*
+    token_amount: number, object_to_assign?: string, object_type_to_assign: ObjectType = ObjectType.PlainText
+*/
+    
+
+    /*
+    We have selected a reputation test, so we will add a pointer that assigns the selected amount. 
+    If a test is not specified, a new token should be created whose maximum amount would be the specified one.
+     */
+    let token_amount: u64 = 100;
+   //  let input_proof = proof.outputs.first().unwrap();  TODO.   Currently, it is not selected from which pointer the reputation is deducted; this way, the reputation is extracted from where the miner decides? Or ergo-lib?
+    let object_to_assign = "rust_proof";
+    let object_type_to_assign = "plain-text/utf-8";
+
+    let mut new_token = false;
+    if (proof.total_amount as u64) < token_amount {
+        println!("TOTAL AMOUNT TOO HIGHT. {} {}", proof.total_amount, token_amount);
+        new_token = true;
+    }
 
     let node = NodeInterface::new("", "213.239.193.208", "9052");
     match node {
@@ -116,11 +142,34 @@ pub fn submit_proofs(database_file: Option<String>) -> Result<String, SubmitTxEr
 
             let ergo_tree = addr.script().unwrap();
 
+            let token = if !new_token {
+                let token_id = Some(TokenId::from(
+                    Digest32::try_from(token_id_str).unwrap()
+                ));
+
+                Some(Token {
+                    token_id: token_id.unwrap(), 
+                    amount: token_amount.try_into().unwrap()
+                })
+            } else {
+                None
+            }; 
+
+            let target_tokens = if token.is_some() {
+                vec![token.clone().unwrap()]
+            } else {
+                vec![]
+            };
+
             // Selector
             let explorer = ExplorerApi::new();
             let input_boxes: Vec<ErgoBox> = explorer.get_utxos(&addr, NetworkPrefix::Testnet)?;
             let box_selector = SimpleBoxSelector::new();
-            let box_selection = box_selector.select(input_boxes,  BoxValue::SAFE_USER_MIN, vec![].as_slice())?;
+            let box_selection = box_selector.select(
+                input_boxes,  
+                BoxValue::SAFE_USER_MIN, 
+                target_tokens.as_slice()
+            )?;
 
             // Inputs
             let inputs = TxIoVec::from_vec(
@@ -132,6 +181,8 @@ pub fn submit_proofs(database_file: Option<String>) -> Result<String, SubmitTxEr
                     .collect::<Vec<_>>(),
             )
             .unwrap();
+
+            println!("inputs -> {:?}", inputs);
             
             let input_total_value = box_selection
                 .boxes
@@ -143,30 +194,26 @@ pub fn submit_proofs(database_file: Option<String>) -> Result<String, SubmitTxEr
             let output_value = BoxValue::new(output_value)?; // Should be the sum of input values ??
 
             // Output candidates
-            let mut output = ErgoBoxCandidateBuilder::new(output_value, ergo_tree.clone(),  block_height.try_into().unwrap());
+            let mut new_output = ErgoBoxCandidateBuilder::new(output_value, ergo_tree.clone(),  block_height.try_into().unwrap());
 
-            if (true) {  // If must mint.
-                let token = Token {
-                    token_id: box_selection.boxes.first().box_id().into(),
-                    amount: 100.try_into().unwrap(),
-                };
-                
-                output.mint_token(token.clone(), "".into(), "".into(), 0);
-
-            } else {
-                let token_id = TokenId::from(
-                    Digest32::try_from(token_id_str.to_string()).unwrap()
-                );
-                output.add_token(Token {
-                    token_id: token_id,
-                    amount: 100.try_into().unwrap(),
-                });
-            }
+            match token {
+                Some(t) => {
+                    new_output.add_token(t.clone());
+                },
+                None => {
+                    let token: Token = Token {
+                        token_id: box_selection.boxes.first().box_id().into(),
+                        amount: token_amount.try_into().unwrap(),
+                    };
+                    
+                    new_output.mint_token(token.clone(), "".into(), "".into(), 0);
+                }
+            };
 
             let fee_value = BoxValue::new(fee_value)?;
             let miner_tree = MINERS_FEE_ADDRESS.script().unwrap();
-            let transaction_fee_box_candidate = ErgoBoxCandidateBuilder::new(fee_value, miner_tree.clone(), block_height.try_into().unwrap());
-            let output_candidates = vec![output.build()?, transaction_fee_box_candidate.build()?];
+            let miner_output = ErgoBoxCandidateBuilder::new(fee_value, miner_tree.clone(), block_height.try_into().unwrap());
+            let output_candidates = vec![new_output.build()?, miner_output.build()?];
             let output_candidates = TxIoVec::from_vec(output_candidates.clone()).unwrap();
 
             let tx = TransactionCandidate {
