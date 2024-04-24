@@ -92,7 +92,7 @@ impl From<SubmitTxError> for PyErr {
  */
 pub fn submit_proofs(database_file: Option<String>) -> Result<String, SubmitTxError> {
     let token_id_str = "c95d7bd2c74986195bcebf516f619167d8235f3ded4260c0e3a7bc5824f72af8";
-
+    let fee_value = 1000000;
     let seed = "income chaos lunar arrive because jazz tomato burst stock stay hold velvet network weekend invite".to_string();
     let (prover, addr) = Wallet::try_from_seed(seed).expect("Invalid seed");
 
@@ -132,8 +132,15 @@ pub fn submit_proofs(database_file: Option<String>) -> Result<String, SubmitTxEr
                     .collect::<Vec<_>>(),
             )
             .unwrap();
+            
+            let input_total_value = box_selection
+                .boxes
+                .iter()
+                .map(|bx| bx.value.as_u64())
+                .sum::<u64>();
 
-            let output_value = BoxValue::new(3000000000 - 1000000)?; // Should be the sum of input values ??
+            let output_value = input_total_value - fee_value;
+            let output_value = BoxValue::new(output_value)?; // Should be the sum of input values ??
 
             // Output candidates
             let mut output = ErgoBoxCandidateBuilder::new(output_value, ergo_tree.clone(),  block_height.try_into().unwrap());
@@ -156,9 +163,9 @@ pub fn submit_proofs(database_file: Option<String>) -> Result<String, SubmitTxEr
                 });
             }
 
-            let transaction_fee = BoxValue::new(1000000)?;
+            let fee_value = BoxValue::new(fee_value)?;
             let miner_tree = MINERS_FEE_ADDRESS.script().unwrap();
-            let transaction_fee_box_candidate = ErgoBoxCandidateBuilder::new(transaction_fee, miner_tree.clone(), block_height.try_into().unwrap());
+            let transaction_fee_box_candidate = ErgoBoxCandidateBuilder::new(fee_value, miner_tree.clone(), block_height.try_into().unwrap());
             let output_candidates = vec![output.build()?, transaction_fee_box_candidate.build()?];
             let output_candidates = TxIoVec::from_vec(output_candidates.clone()).unwrap();
 

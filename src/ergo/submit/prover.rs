@@ -99,12 +99,12 @@ impl Wallet {
                     Based on: https://discord.com/channels/668903786361651200/669989266478202917/1232355179232362566
                 */
 
-                // println!("derivation default path -> {:?}", sk.path().to_string());  // "m/"
                 let addr = Address::P2Pk(sk.public_image());
-                /* println!(
-                    "Wallet address: {:?}",
-                    AddressEncoder::encode_address_as_string(NetworkPrefix::Testnet, &addr)  // 3WvdKWY5dHf4zMPHWTjWKvF7BwpzNJzC72HPKCWwLcde6TdK9ht2
-                );*/ 
+                println!(
+                    "Wallet address: {:?}, from derivation path {}",
+                    AddressEncoder::encode_address_as_string(NetworkPrefix::Testnet, &addr),
+                    sk.path().to_string()
+                ); 
 
                 let wallet = Self {
                     secrets: vec![PrivateInput::DlogProverInput(dpi)],
