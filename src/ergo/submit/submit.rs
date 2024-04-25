@@ -1,12 +1,14 @@
 use ergo_lib::chain::ergo_box::box_builder::{ErgoBoxCandidateBuilder, ErgoBoxCandidateBuilderError};
 use ergo_lib::chain::transaction::TxIoVec;
 use ergo_lib::ergo_chain_types::{Digest32, DigestNError};
-use ergo_lib::ergotree_interpreter::sigma_protocol::private_input::PrivateInput;
+use ergo_lib::ergotree_ir::chain::ergo_box::NonMandatoryRegisterId;
+use ergo_lib::ergotree_ir::mir::constant::Constant;
 use ergo_lib::ergotree_interpreter::sigma_protocol::prover::ContextExtension;
-use ergo_lib::ergotree_ir::chain::address::{AddressEncoder, AddressEncoderError, NetworkPrefix};
+use ergo_lib::ergotree_ir::chain::address::{AddressEncoderError, NetworkPrefix};
 use ergo_lib::ergotree_ir::chain::ergo_box::box_value::{BoxValue, BoxValueError};
-use ergo_lib::ergotree_ir::chain::ergo_box::ErgoBox;
+use ergo_lib::ergotree_ir::chain::ergo_box::{ErgoBox};
 use ergo_lib::ergotree_ir::chain::token::{self, Token, TokenAmount, TokenId};
+use ergo_lib::ergotree_ir::types::stype::SType;
 use ergo_lib::wallet::box_selector::{BoxSelector, BoxSelectorError, SimpleBoxSelector};
 use ergo_lib::wallet::miner_fee::MINERS_FEE_ADDRESS;
 use ergo_lib::wallet::signing::TxSigningError;
@@ -15,6 +17,7 @@ use ergo_node_interface::NodeInterface;
 use thiserror::Error;
 use pyo3::prelude::*;
 use pyo3::exceptions::PyValueError;
+use crate::ergo::contract::{ProofContract, ProofContractError};
 use crate::ergo::explorer::error::ExplorerApiError;
 use crate::ergo::explorer::explorer_api::ExplorerApi;
 use crate::ergo::submit::prover::{SeedPhrase, SigmaProver};
@@ -55,6 +58,9 @@ pub enum SubmitTxError {
 
     #[error("Explorer API error {0}")]
     ExplorerError(#[from] ExplorerApiError),
+
+    #[error("Contract error {0}")]
+    ProofContractError(#[from] ProofContractError)
 }
 
 impl From<SubmitTxError> for PyErr {
@@ -140,7 +146,8 @@ pub fn submit_proofs(database_file: Option<String>) -> Result<String, SubmitTxEr
                 }
             };
 
-            let ergo_tree = addr.script().unwrap();
+            let contract_ergo_tree = ProofContract::new()?.ergo_tree();
+            let addr_ergo_tree = addr.script().unwrap();
 
             let token = if !new_token {
                 let token_id = Some(TokenId::from(
@@ -163,10 +170,10 @@ pub fn submit_proofs(database_file: Option<String>) -> Result<String, SubmitTxEr
 
             // Selector
             let explorer = ExplorerApi::new();
-            let input_boxes: Vec<ErgoBox> = explorer.get_utxos(&addr, NetworkPrefix::Testnet)?;
+            let input_boxes: Vec<ErgoBox> = explorer.get_utxos(&addr, NetworkPrefix::Testnet)?;  // This MAYBE only returns boxes with the simple address script. No with reputation proof box.
             let box_selector = SimpleBoxSelector::new();
             let box_selection = box_selector.select(
-                input_boxes,  
+                input_boxes,
                 BoxValue::SAFE_USER_MIN, 
                 target_tokens.as_slice()
             )?;
@@ -190,15 +197,26 @@ pub fn submit_proofs(database_file: Option<String>) -> Result<String, SubmitTxEr
                 .map(|bx| bx.value.as_u64())
                 .sum::<u64>();
 
-            let output_value = input_total_value - fee_value;
-            let output_value = BoxValue::new(output_value)?; // Should be the sum of input values ??
+            let non_used_value = BoxValue::new(
+                    input_total_value - fee_value - BoxValue::SAFE_USER_MIN.as_u64()
+                )?;
 
             // Output candidates
-            let mut new_output = ErgoBoxCandidateBuilder::new(output_value, ergo_tree.clone(),  block_height.try_into().unwrap());
+            let mut pointer_output = ErgoBoxCandidateBuilder::new(
+                BoxValue::SAFE_USER_MIN, 
+                contract_ergo_tree.clone(),
+                block_height.try_into().unwrap()
+                );
+
+            let non_used_output = ErgoBoxCandidateBuilder::new(
+                non_used_value, 
+                addr_ergo_tree.clone(),
+                block_height.try_into().unwrap()
+                );
 
             match token {
                 Some(t) => {
-                    new_output.add_token(t.clone());
+                    pointer_output.add_token(t.clone());
                 },
                 None => {
                     let token: Token = Token {
@@ -206,14 +224,27 @@ pub fn submit_proofs(database_file: Option<String>) -> Result<String, SubmitTxEr
                         amount: token_amount.try_into().unwrap(),
                     };
                     
-                    new_output.mint_token(token.clone(), "".into(), "".into(), 0);
+                    pointer_output.mint_token(token.clone(), "".into(), "".into(), 0);
                 }
             };
+ 
+            /*
+            
+            pointer_output.set_register_value(NonMandatoryRegisterId::R4, Constant::from(""));     reputation token label ?
+            pointer_output.set_register_value(NonMandatoryRegisterId::R5, Constant::from(object_to_assign));
+            pointer_output.set_register_value(NonMandatoryRegisterId::R6, Constant::from(object_to_assign));
+            pointer_output.set_register_value(NonMandatoryRegisterId::R7, Constant::from(generate_pk_proposition(¿addr?)));
+            
+            */
 
             let fee_value = BoxValue::new(fee_value)?;
             let miner_tree = MINERS_FEE_ADDRESS.script().unwrap();
             let miner_output = ErgoBoxCandidateBuilder::new(fee_value, miner_tree.clone(), block_height.try_into().unwrap());
-            let output_candidates = vec![new_output.build()?, miner_output.build()?];
+            let output_candidates = vec![
+                non_used_output.build()?,
+                pointer_output.build()?, 
+                miner_output.build()?
+                ];
             let output_candidates = TxIoVec::from_vec(output_candidates.clone()).unwrap();
 
             let tx = TransactionCandidate {
