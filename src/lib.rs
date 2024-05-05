@@ -1,19 +1,28 @@
+#[cfg(feature = "python")]
 use database::load::{load_from_db, LoadError};
+#[cfg(feature = "python")]
 use crate::database::spend::{store_on_db, SpendError};
+#[cfg(feature = "python")]
 use crate::database::generate::generate;
+#[cfg(feature = "python")]
 use proof::pointer_box::Pointer;
+#[cfg(feature = "python")]
 use crate::ergo::submit::submit::{submit_proofs, SubmitTxError};
+#[cfg(feature = "python")]
 use crate::ergo::fetch::{fetch_proofs, FetchError};
-
-#[cfg(feature = "pyo3-bindings")]
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
+#[cfg(feature = "python")]
 use pyo3::types::{PyString, PyFloat};
 
-#[cfg(feature = "wasm-bindings")]
+#[cfg(feature = "web")]
 use wasm_bindgen::prelude::*;
 
+#[cfg(feature = "python")]
 pub mod proof;
+#[cfg(feature = "python")]
 pub mod database;
+#[cfg(feature = "python")]
 pub mod ergo;
 
 /**
@@ -28,7 +37,7 @@ https://pyo3.rs/main/class.html?highlight=lifetime#no-lifetime-parameters
 Instead, each call is a process that will use surrealDB on disk (using async for communication
 with the DB, but in isolation for each call).
 */
-#[cfg(feature = "pyo3-bindings")]
+#[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(signature = (database_file))]
 fn fetch<'p>(py: Python<'p>, database_file: Option<&PyString>)
@@ -47,7 +56,7 @@ fn fetch<'p>(py: Python<'p>, database_file: Option<&PyString>)
 }
 
 
-#[cfg(feature = "pyo3-bindings")]
+#[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(signature = (database_file))]
 fn submit<'p>(py: Python<'p>, database_file: Option<&PyString>)
@@ -73,7 +82,7 @@ fn submit<'p>(py: Python<'p>, database_file: Option<&PyString>)
 /**
 The pointer box parameter must be on-chain.
  */
-#[cfg(feature = "pyo3-bindings")]
+#[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(signature = (proof_id, amount, pointer, database_file))]
 fn spend<'p>(py: Python<'p>, proof_id: &PyString, amount: i64, pointer: Option<&PyString>, database_file: Option<&PyString>)   // TODO surreal_id can be None
@@ -104,7 +113,7 @@ Params
 - root_id surreal_id of the root proof.
 - pointer to calculate
  */
-#[cfg(feature = "pyo3-bindings")]
+#[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(signature = (root_proof_id, pointer, database_file))]
 fn compute<'p>(py: Python<'p>, root_proof_id: Option<&PyString>, pointer: &PyString, database_file: Option<&PyString>)
@@ -133,7 +142,7 @@ fn compute<'p>(py: Python<'p>, root_proof_id: Option<&PyString>, pointer: &PyStr
 /*
    TODO If the desired DB mode is Mem, all the methods should run using Tokio. If not, that's not important.
  */
-#[cfg(feature = "pyo3-bindings")]
+#[cfg(feature = "python")]
 #[pymodule]
 fn sigma_reputation_graph(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(fetch, m)?)?;
@@ -143,7 +152,7 @@ fn sigma_reputation_graph(_py: Python, m: &PyModule) -> PyResult<()> {
     Ok(())
 }
 
-#[cfg(feature = "wasm-bindings")]
+#[cfg(feature = "web")]
 #[wasm_bindgen]
 pub fn hello_browser() -> String {
     "Hello from Rust, Browser!".into()

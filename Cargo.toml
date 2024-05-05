@@ -1,14 +1,12 @@
 [package]
-name = "sigma-reputation-graph"
+name = "reputation-graph"
 version = "0.0.0"
 edition = "2021"
 
 # Define optional features
 [features]
-# Default features
-default = ["pyo3-bindings"]
-# Features for PyO3 compilation
-pyo3-bindings = [
+default = ["web"]
+python = [
     "pyo3",
     "pyo3-asyncio",
     "tokio",
@@ -17,10 +15,20 @@ pyo3-bindings = [
     "surrealdb",
     "serde",
     "futures",
-    "openssl"
+    "openssl",
+    "ergo-lib",
+    "ergo-node-interface",
+    "hex",
+    "log",
+    "once_cell",
+    "sha2",
+    "base16",
+    "base64",
+    "derive_more",
+    "serde_json",
+    "thiserror"
 ]
-# Features for WASM compilation
-wasm-bindings = ["serde"]
+web = ["wasm-bindgen"]
 
 [dependencies]
 pyo3 = { version = "0.20.0", features = ["extension-module"], optional = true }
@@ -30,30 +38,27 @@ rand = { version = "0.8.5", optional = true }
 assert_approx_eq = { version = "1.0", optional = true }
 surrealdb = { version = "1.0.0", features = [], optional = true }
 serde = { version = "1.0.193", features = ["derive"], optional = true }
-serde_json = "1.0"
-thiserror = "1.0.20"
+serde_json = { version = "1.0", optional = true }
+thiserror = { version = "1.0.20", optional = true }
 reqwest = { version = "0.12.3", features = ["json", "blocking"] }
 url = { version = "2.2", features = ["serde"] }
 futures = { version = "0.3.29", optional = true }
 openssl = { version = "0.10", features = ["vendored"], optional = true }
-ergo-lib = { version = "0.27.1", features = ["compiler"]}
-ergo-node-interface = { git = "https://github.com/ergoplatform/ergo-node-interface-rust.git", version = "0.4.1", branch = "master", package = "ergo-node-interface"}
-hex = "0.4.3"
-log = "0.4.11"
-once_cell = "1.15.0"
-sha2 = "0.10"
-base16 = "0.2.1"
-base64 = "0.22"
-derive_more = "0.99.17"
+ergo-lib = { version = "0.27.1", features = ["compiler"], optional = true }
+ergo-node-interface = { git = "https://github.com/ergoplatform/ergo-node-interface-rust.git", version = "0.4.1", branch = "master", package = "ergo-node-interface", optional = true }
+hex = { version = "0.4.3", optional = true }
+log = { version = "0.4.11", optional = true }
+once_cell = { version = "1.15.0", optional = true }
+sha2 = { version = "0.10", optional = true }
+base16 = { version = "0.2.1", optional = true }
+base64 = { version = "0.22", optional = true }
+derive_more = { version = "0.99.17", optional = true }
+wasm-bindgen = { version = "0.2.73", optional = true } 
 
-# Specify WASM dependencies
-[dependencies.wasm-bindgen]
-version = "0.2"
-optional = true
 
 # Specify configuration for when compiling as a Python extension with PyO3
 [lib]
-name = "sigma_reputation_graph"
+name = "reputation_graph"
 crate-type = ["cdylib"]
 
 # Conditional compilation configuration
