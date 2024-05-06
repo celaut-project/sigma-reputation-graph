@@ -18,17 +18,17 @@ args = parser.parse_args()
 if args.build:
     # Execute the commands
     try:
-        os.system("pip3 uninstall sigma_reputation_graph -y")
+        os.system("pip3 uninstall reputation_graph -y")
         os.system("rm -rf target/wheels/*")
     except:
         pass
-    os.system("maturin build --strip --release --features pyo3-bindings")
+    os.system("maturin build --strip --release --features python")
     os.system("pip3 install target/wheels/*")
 
     print("Build Ok!")
 
 if args.test:
-    from sigma_reputation_graph import spend, compute, fetch, submit
+    from reputation_graph import spend, compute, fetch, submit
 
     def simple_test():
         print("\n\nSimple test")
@@ -101,11 +101,11 @@ if args.test:
               f"\n          SCORE -> {proof_number/mean(times)}.")
 
     # os.system("rm -rf reputation.db")
-    # fetch(None)
-    # simple_test()
-    # performance_test()
-    # print("\n\nTests Ok!")
-    submit(None)
+    fetch(None)
+    simple_test()
+    performance_test()
+    print("\n\nTests Ok!")
+    # submit(None)
     os.system("rm -rf reputation.db")
 
 print("\nEnd.")

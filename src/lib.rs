@@ -144,7 +144,7 @@ fn compute<'p>(py: Python<'p>, root_proof_id: Option<&PyString>, pointer: &PyStr
  */
 #[cfg(feature = "python")]
 #[pymodule]
-fn sigma_reputation_graph(_py: Python, m: &PyModule) -> PyResult<()> {
+fn reputation_graph(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(fetch, m)?)?;
     m.add_function(wrap_pyfunction!(submit, m)?)?;
     m.add_function(wrap_pyfunction!(spend, m)?)?;
