@@ -1,0 +1,14 @@
+{
+  "name": "reputation-graph",
+  "version": "0.0.0",
+  "files": [
+    "reputation_graph_bg.wasm",
+    "reputation_graph.js",
+    "reputation_graph.d.ts"
+  ],
+  "module": "reputation_graph.js",
+  "types": "reputation_graph.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
