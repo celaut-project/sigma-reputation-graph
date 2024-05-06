@@ -1,2 +1,28 @@
 #!/bin/bash
-wasm-pack build --target web --out-dir target/web
+
+# Check if enough arguments are provided
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 <output_directory>"
+    exit 1
+fi
+
+# Assign the output directory passed as argument to a variable
+output_directory="$1"
+
+# Check if the output directory already exists
+if [ -d "$output_directory" ]; then
+    # Prompt the user if they want to continue and delete the existing output directory
+    read -p "Output directory '$output_directory' already exists. Do you want to continue and delete it? [y/n]: " choice
+    if [ "$choice" != "y" ]; then
+        echo "Aborted."
+        exit 1
+    fi
+    # Delete the existing output directory
+    rm -rf "$output_directory" || exit 1
+fi
+
+# Create the output directory
+mkdir -p "$output_directory" || exit 1
+
+# Execute the wasm-pack command with the specified output directory
+wasm-pack build --target web --out-dir "$output_directory" --features web
