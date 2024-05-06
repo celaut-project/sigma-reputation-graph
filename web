@@ -26,3 +26,6 @@ mkdir -p "$output_directory" || exit 1
 
 # Execute the wasm-pack command with the specified output directory
 wasm-pack build --target web --out-dir "$output_directory" --features web
+
+# Delete the .gitignore file from the output directory
+rm "$output_directory/.gitignore"
