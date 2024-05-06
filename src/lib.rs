@@ -154,6 +154,6 @@ fn sigma_reputation_graph(_py: Python, m: &PyModule) -> PyResult<()> {
 
 #[cfg(feature = "web")]
 #[wasm_bindgen]
-pub fn hello_browser() -> String {
-    "Hello from Rust, Browser!".into()
+pub fn hello_browser() -> i32 {
+    3
 }
