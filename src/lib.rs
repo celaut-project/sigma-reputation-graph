@@ -25,8 +25,6 @@ use pyo3::prelude::*;
 #[cfg(feature = "python")]
 use pyo3::types::{PyString, PyFloat};
 
-#[cfg(feature = "web")]
-use wasm_bindgen::prelude::*;
 
 /**
 Pyo3 doesn't support wrap structs with lifetimes on the Python interpreter.
@@ -153,9 +151,4 @@ fn reputation_graph(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(spend, m)?)?;
     m.add_function(wrap_pyfunction!(compute, m)?)?;
     Ok(())
-}
-
-#[cfg_attr(feature = "web", wasm_bindgen)]
-pub fn hello_browser() -> String {
-    "hello_browser".into()
 }
