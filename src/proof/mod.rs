@@ -1,2 +1,2 @@
-pub(crate) mod pointer_box;
-pub(crate) mod reputation_proof;
+pub mod pointer_box;
+pub mod reputation_proof;

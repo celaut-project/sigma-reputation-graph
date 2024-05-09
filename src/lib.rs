@@ -1,29 +1,32 @@
 #[cfg(feature = "python")]
-use database::load::{load_from_db, LoadError};
+pub mod proof;
+#[cfg(feature = "python")]
+pub mod database;
+#[cfg(feature = "python")]
+pub mod ergo;
+
+#[cfg(feature = "python")]
+use crate::database::load::{load_from_db, LoadError};
 #[cfg(feature = "python")]
 use crate::database::spend::{store_on_db, SpendError};
 #[cfg(feature = "python")]
 use crate::database::generate::generate;
+
 #[cfg(feature = "python")]
-use proof::pointer_box::Pointer;
+use crate::proof::pointer_box::Pointer;
+
 #[cfg(feature = "python")]
 use crate::ergo::submit::submit::{submit_proofs, SubmitTxError};
 #[cfg(feature = "python")]
 use crate::ergo::fetch::{fetch_proofs, FetchError};
 #[cfg(feature = "python")]
+
 use pyo3::prelude::*;
 #[cfg(feature = "python")]
 use pyo3::types::{PyString, PyFloat};
 
 #[cfg(feature = "web")]
 use wasm_bindgen::prelude::*;
-
-#[cfg(feature = "python")]
-pub mod proof;
-#[cfg(feature = "python")]
-pub mod database;
-#[cfg(feature = "python")]
-pub mod ergo;
 
 /**
 Pyo3 doesn't support wrap structs with lifetimes on the Python interpreter.
@@ -152,8 +155,7 @@ fn reputation_graph(_py: Python, m: &PyModule) -> PyResult<()> {
     Ok(())
 }
 
-#[cfg(feature = "web")]
-#[wasm_bindgen]
+#[cfg_attr(feature = "web", wasm_bindgen)]
 pub fn hello_browser() -> String {
     "hello_browser".into()
 }
